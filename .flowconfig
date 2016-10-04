@@ -1,0 +1,15 @@
+[ignore]
+.*/node_modules/fbjs/.*
+
+[include]
+
+[libs]
+flow/declarations/
+
+[options]
+module.system.node.resolve_dirname=.
+module.system.node.resolve_dirname=node_modules
+suppress_comment=\\(.\\|\n\\)*\\$FlowFixMe
+
+[version]
+^0.33.0
