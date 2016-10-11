@@ -1,5 +1,7 @@
 /* @flow */
 
+require('./bootstrap/rollbar');
+
 export {HTTPServer} from './web/index';
 
 // GraphQL

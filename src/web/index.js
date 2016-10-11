@@ -207,7 +207,7 @@ export class HTTPServer {
    * [registerDefaultPlugins - loads all plugins in hapi/plugins folder]
    */
   registerDefaultPlugins() {
-    each(...glob.sync(path.join(__dirname, 'plugins', '*.js')), plugin => {
+    each(glob.sync(path.join(__dirname, 'plugins', '*.js')), plugin => {
       // $FlowFixMe - Doesn't support requiring via variables
       require(plugin).default(this.hapi);
     });

@@ -33,8 +33,8 @@ if (process.env.ROLLBAR_TOKEN) {
 
     errorHandler.error(err, function(err2) {
       if (err2) {
-        chalk.red.bold('[Rollbar] Encountered an error while handling an uncaught exception.');
-        chalk.red.bold(err.stack);
+        console.log(chalk.red.bold('[Rollbar] Encountered an error while handling an uncaught exception.'));
+        console.log(chalk.red.bold(err.stack));
       }
 
       process.exit(1);
@@ -42,17 +42,17 @@ if (process.env.ROLLBAR_TOKEN) {
   });
 
   process.on('unhandledRejection', function(reason, promise) {
-    chalk.red.bold(reason.stack);
+    console.log(chalk.red.bold(reason.stack));
     errorHandler.error(reason);
   });
 } else {
   process.on('unhandledRejection', function(reason, promise) {
-    chalk.red.bold(reason.stack);
+    console.log(chalk.red.bold(reason.stack));
   });
 
   process.on('uncaughtException', function(err) {
-    chalk.red.bold('Uncaught exception:');
-    chalk.red.bold(err.stack);
+    console.log(chalk.red.bold('Uncaught exception:'));
+    console.log(chalk.red.bold(err.stack));
     process.exit(1);
   });
 }
