@@ -1,8 +1,8 @@
 /* @flow */
 import {includes, isString, assign, noop} from 'lodash';
 import rollbar from 'rollbar';
+import {TError} from './terror';
 
-declare var TError: Error;
 type TagType = {connection: string, client: string};
 
 /* eslint-disable max-statements */
