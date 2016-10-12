@@ -1,6 +1,6 @@
 {
   "name": "distraught",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "An unHapi Node.js server",
   "main": "dist/index.js",
   "scripts": {
