@@ -2,7 +2,11 @@
 
 require('./bootstrap/rollbar');
 
-export {HTTPServer} from './web/index';
+export const Boom = require('boom');
+
+export {HTTPServer} from './web-server/index';
+export {WorkerServer} from './worker-server/index';
+export {CronServer} from './cron-server/index';
 
 // GraphQL
 export {gql} from './gql';
@@ -10,6 +14,5 @@ export {gql} from './gql';
 // Lib
 export {knex} from './lib/knex';
 export {sg, sgHelper} from './lib/sendgrid';
-export {worker} from './lib/heretic';
 export {slack} from './lib/slack';
 export {TError} from './lib/terror';

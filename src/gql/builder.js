@@ -53,7 +53,6 @@ export function collection(graphQLObject: GraphQLObjectInstanceType, injectFilte
         if (typeof injectFiltersFromParent === 'function') {
           filters = injectFiltersFromParent(parent, filters, context);
         }
-
         return graphQLObject._typeConfig.resolve(parent, filters, context);
       },
     };

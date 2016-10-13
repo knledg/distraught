@@ -15,6 +15,8 @@ declare var process: { // eslint-disable-line
     SENDGRID_API_KEY: string,
     SENDGRID_DEV_EMAIL: string,
     SLACK_WEBHOOK_URL: string,
+    CRYPTO_KEY?: string,
+    CRYPTO_ALGO?: string,
   },
   cwd: Function,
   on: Function,
