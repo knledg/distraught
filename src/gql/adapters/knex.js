@@ -3,6 +3,8 @@ import {camelCase, mapKeys} from 'lodash';
 import {knex} from '../../lib/knex';
 import Promise from 'bluebird';
 
+import type {Promise as PromiseType} from 'bluebird';
+
 const MAX_LIMIT = 1000;
 
 /**
@@ -10,14 +12,11 @@ const MAX_LIMIT = 1000;
  *              Builds and executes queries
  *              Outputs consistent results for a record / collection
  *              Handles defaults]
- * @param  {null|object}   parent  optional parent object
  * @param  {object}        filters user-specified filters
- * @param  {function} cb   cb to handle the user-specified filters
+ * @param  {function}      query knex query builder instance
  * @return {promise}       record|collection {records: [], count}
  */
-export function knexQuery(parent: ?any, filters: any, cb: Function, columns: ?string): Promise<*> {
-  let query = cb(knex);
-
+export function knexQuery(filters: any, query: PromiseType, columns: ?string): Promise<*> {
   // Do not edit
   const recordQuery = query
     .debug(process.env.KNEX_DEBUG)

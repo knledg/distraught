@@ -3,8 +3,7 @@ import {each, map, compact, isArray, isEmpty} from 'lodash';
 import chalk from 'chalk';
 
 // Default Pres
-import {onlyOnDevelop} from './pre/only-on-develop';
-import {requireJWTAuth} from './pre/require-jwt-auth';
+import {onlyOnDevelop, requireJWTAuth, requiresRole} from './pre';
 
 import {Server} from 'hapi';
 import path from 'path';
@@ -13,12 +12,9 @@ import glob from 'glob';
 import {gql} from '../gql';
 
 import {TError} from '../lib/terror';
+import {GenericServer} from '../lib/generic-server';
 
 const versionRegex = new RegExp(/v[0-9]+$/);
-const REQUIRED_ENV = [
-  'NODE_PATH', 'NODE_ENV', 'DATABASE_URL', 'APP_NAME', 'AMQP_URL',
-  'SENDGRID_API_KEY', 'SENDGRID_DEV_EMAIL',
-];
 const DEFAULT_ROUTE_CONFIG = {
   cors: {
     origin: ['*'],
@@ -70,7 +66,7 @@ let pres: any = {
 };
 
 
-export class HTTPServer {
+export class HTTPServer extends GenericServer {
   hapi: any;
   options: OptionsType = {};
 
@@ -116,37 +112,25 @@ export class HTTPServer {
 
     pres.onlyOnDevelop = onlyOnDevelop;
     pres.requireJWTAuth = requireJWTAuth;
+    pres.requiresRole = requiresRole;
   }
 
   static getPre(name: string) {
-    if (! pres[name]) {
+    if (! pres.hasOwnProperty(name)) {
       throw new Error(`Unable to find HTTPServer Pre: ${name}`);
     }
     return pres[name];
   }
 
   constructor(options: OptionsType = {}) {
+    super(options);
     this.options = options;
-    this.assertEnv();
     this.hapi = new Server();
 
     this.setConnection();
     this.registerDefaultPlugins();
     this.registerPlugins();
     this.registerRoutes();
-  }
-
-  assertEnv() {
-    if (! (this.options.requiredEnv && this.options.requiredEnv.length)) {
-      return;
-    }
-
-    try {
-      require('assert-env')(REQUIRED_ENV);
-    } catch (err) {
-      console.log(chalk.red.bold(err.message.substr(0, err.message.length - 1))); // eslint-disable-line
-      process.exit(1);
-    }
   }
 
   enableGraphQLPlugin() {
@@ -166,7 +150,7 @@ export class HTTPServer {
           },
           formatError: (error: {message: string, locations: Array<string>, stack: string}) => {
             /* eslint-disable no-console */
-            console.log(chalk.red.bold('==> ', error));
+            console.error(chalk.red.bold('==> ', error));
             /* eslint-enable no-console */
             return process.env.NODE_ENV !== 'development' ? {message: error.message} : {
               message: error.message,
@@ -214,7 +198,6 @@ export class HTTPServer {
 
     let hapiPlugins = [
       require('inert'),
-      require('vision'),
       require('hapi-auth-jwt2'),
     ];
 
@@ -244,11 +227,14 @@ export class HTTPServer {
     this.setAuthStrategies();
 
     // This plugin requires the Auth Strategy to be set already
-    this.hapi.register([this.enableGraphQLPlugin()], function(err) {
-      if (err) {
-        throw err;
-      }
-    });
+    const graphQLPlugin = this.enableGraphQLPlugin();
+    if (graphQLPlugin) {
+      this.hapi.register([this.enableGraphQLPlugin()], function(err) {
+        if (err) {
+          throw err;
+        }
+      });
+    }
   }
 
   /**
@@ -287,7 +273,7 @@ export class HTTPServer {
    */
   start() {
     this.hapi.start(() => {
-      console.log(chalk.bold.blue(`Server: ${this.hapi.info.uri}`)); // eslint-disable-line
+      console.log(chalk.bold.blue(`Web Server: ${this.hapi.info.uri}`), chalk.bold.green('[enabled]')); // eslint-disable-line
     });
   }
 }

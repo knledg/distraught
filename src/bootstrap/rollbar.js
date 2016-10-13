@@ -5,6 +5,8 @@ import chalk from 'chalk';
 
 import {errorHandler} from '../lib/error-handler';
 
+import type Promise from 'bluebird';
+
 /**
  * [Listen to process log stream for uncaught errors or rejections and notify developers]
  */
@@ -27,11 +29,11 @@ if (process.env.ROLLBAR_TOKEN) {
     ],
   });
 
-  process.on('uncaughtException', function(err) {
-    chalk.red.bold('[Rollbar] Handling uncaught exception.');
-    chalk.red.bold(err.stack);
+  process.on('uncaughtException', function(err: Error): void {
+    console.log(chalk.red.bold('[Rollbar] Handling uncaught exception.'));
+    console.log(chalk.red.bold(err.stack));
 
-    errorHandler.error(err, function(err2) {
+    errorHandler.error(err, function(err2: Error) {
       if (err2) {
         console.log(chalk.red.bold('[Rollbar] Encountered an error while handling an uncaught exception.'));
         console.log(chalk.red.bold(err.stack));
@@ -41,16 +43,16 @@ if (process.env.ROLLBAR_TOKEN) {
     });
   });
 
-  process.on('unhandledRejection', function(reason, promise) {
+  process.on('unhandledRejection', function(reason: Error, promise: Promise): void {
     console.log(chalk.red.bold(reason.stack));
     errorHandler.error(reason);
   });
 } else {
-  process.on('unhandledRejection', function(reason, promise) {
+  process.on('unhandledRejection', function(reason: Error, promise: Promise): void {
     console.log(chalk.red.bold(reason.stack));
   });
 
-  process.on('uncaughtException', function(err) {
+  process.on('uncaughtException', function(err: Error): void {
     console.log(chalk.red.bold('Uncaught exception:'));
     console.log(chalk.red.bold(err.stack));
     process.exit(1);

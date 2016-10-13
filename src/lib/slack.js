@@ -2,6 +2,7 @@
 /* eslint-disable no-console */
 import Promise from 'bluebird';
 import axios from 'axios';
+import chalk from 'chalk';
 
 const url = process.env.SLACK_WEBHOOK_URL;
 
@@ -37,11 +38,23 @@ declare type SlackPayload = {
   attachments?: SlackPayloadAttachment[],
 };
 
+function getMessage(data: SlackPayload) {
+  if (data.text) {
+    return data.text;
+  }
+
+  if (data.attachments) {
+    return data.attachments.pretext || data.attachments.title;
+  }
+
+  return 'Unknown message';
+}
+
 export const slack = {
   send(data: SlackPayload): Promise {
     if (!url) {
       if (process.env.NODE_ENV === 'development') {
-        console.log('===> Slack Notification (Not Sent): ', data.text);
+        console.log(chalk.magenta.bold('Slack Notification (Not Sent): '), getMessage(data));
         return Promise.resolve();
       }
       return Promise.reject('Slack Webhook URL not found');
