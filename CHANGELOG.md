@@ -1,3 +1,8 @@
+## [v0.3.1]
+> October 17, 2016
+
+- Bugfix: Re-add Hapi's vision as a plugin, we can use the version that comes with Hapi.
+
 ## [v0.3.0]
 > October 17, 2016
 
