@@ -22,7 +22,7 @@ declare type SlackPayloadAttachment = {
   title?: string,
   title_link?: string,
   text?: string,
-  fields?: SlackPayloadAttachmentField[],
+  fields?: Array<SlackPayloadAttachmentField>,
   image_url?: string,
   thumb_url?: string,
   footer?: string,
@@ -35,7 +35,7 @@ declare type SlackPayload = {
   channel?: string,
   icon_emoji?: string,
   text?: string,
-  attachments?: SlackPayloadAttachment[],
+  attachments?: Array<SlackPayloadAttachment>,
 };
 
 function getMessage(data: SlackPayload) {
@@ -43,8 +43,8 @@ function getMessage(data: SlackPayload) {
     return data.text;
   }
 
-  if (data.attachments) {
-    return data.attachments.pretext || data.attachments.title;
+  if (data.attachments && data.attachments[0]) {
+    return data.attachments[0].pretext || data.attachments[0].title;
   }
 
   return 'Unknown message';

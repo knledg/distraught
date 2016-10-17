@@ -88,7 +88,6 @@ export function pgObject(newPGObject: PGObjectType) {
     fields: newPGObject.columns,
     args: collectionArgs(newPGObject.filters),
     resolve(parent: any, filters: any, {user}:{user: AuthUserType}) {
-      debugger;
       if (newPGObject.allowedRoles) {
         assertHasPermission(user, newPGObject.allowedRoles);
       } else if (newPGObject.allowedEnvironments) {
@@ -101,7 +100,6 @@ export function pgObject(newPGObject: PGObjectType) {
       }
       return knexQuery(filters, result.query, result.columns)
         .then(records => {
-          debugger;
           if (result.transform && isFunction(result.transform)) {
             return result.transform(records);
           }
