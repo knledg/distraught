@@ -198,6 +198,7 @@ export class HTTPServer extends GenericServer {
 
     let hapiPlugins = [
       require('inert'),
+      require('vision'),
       require('hapi-auth-jwt2'),
     ];
 
