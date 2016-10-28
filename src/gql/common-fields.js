@@ -1,8 +1,9 @@
 /* @flow */
-import {assign, isFunction} from 'lodash';
+import {replace, assign, isFunction} from 'lodash';
 import {
-  GraphQLString, GraphQLInt, GraphQLBoolean, GraphQLFloat,
-  GraphQLID, GraphQLEnumType, GraphQLObjectType} from 'graphql';
+  GraphQLString, GraphQLInt, GraphQLBoolean, GraphQLFloat, GraphQLList,
+  GraphQLNonNull, GraphQLID, GraphQLEnumType, GraphQLObjectType,
+  GraphQLInputObjectType, GraphQLSchema} from 'graphql';
 import GQLDate from '@jwdotjs/graphql-custom-datetype';
 
 import {knex} from '../lib/knex';
@@ -13,10 +14,21 @@ import type {AuthUserType} from '../../flow/types/auth-user';
 
 type PGObjectType = {
   name: string, // GQL Object name
-  description: string, // GQL Object description
+  description?: string, // GQL Object description
   columns: any, // GQL Object allowed requestable columns
   filters: any, // GQL Object allowed collection filters
   allowedRoles?: Array<string>,
+  allowedEnvironments?: Array<string>,
+  resolve: Function, // @todo make more explicit
+};
+
+type PGMutationType = {
+  name: string, // GQL Object name
+  description: string, // GQL Object description
+  columns: any, // GQL Object allowed requestable columns
+  payloadName: string,
+  payload: any,
+  allowedRoles: ?Array<string>,
   allowedEnvironments?: Array<string>,
   resolve: Function, // @todo make more explicit
 };
@@ -25,6 +37,21 @@ type GenericType = {
   type: any,
   description: string,
   resolve?: Function,
+  required: Function,
+  list: Function,
+};
+
+type EnumType = {
+  type: any,
+  description: string,
+  resolve?: Function,
+  required: Function,
+  list: Function,
+};
+
+type SchemaObjectType = {
+  queries: any,
+  mutations: any,
 };
 
 const SORT_ENUM = new GraphQLEnumType({
@@ -41,11 +68,20 @@ function buildGeneric(type: any, description: string, resolve: ?Function) {
   let generic: GenericType = {
     type,
     description,
+    required() {
+      generic.type = new GraphQLNonNull(generic.type);
+      return generic;
+    },
+    list() {
+      generic.type = new GraphQLList(generic.type);
+      return generic;
+    },
   };
 
   if (resolve) {
     generic.resolve = resolve;
   }
+
   return generic;
 }
 
@@ -69,24 +105,165 @@ export function float(description: string = '', resolve: ?Function) {
   return buildGeneric(GraphQLFloat, description, resolve);
 }
 
+
+export function options(enumOpts: {name: string, description: string, resolve?: Function, values: any}) {
+  if (! enumOpts.name) {
+    throw new Error('Invalid enum: Name is required');
+  } else if (! enumOpts.description) {
+    throw new Error('Invalid enum: Description is required');
+  } else if (! enumOpts.values) {
+    throw new Error('Invalid enum: Values are required');
+  }
+
+  const newEnum: EnumType = {
+    type: new GraphQLEnumType({
+      name: enumOpts.name,
+      values: enumOpts.values,
+    }),
+    description: enumOpts.description,
+    required() {
+      newEnum.type = new GraphQLNonNull(newEnum.type);
+      return newEnum;
+    },
+    list() {
+      newEnum.type = new GraphQLList(newEnum.type);
+      return newEnum;
+    },
+  };
+
+  if (enumOpts.resolve) {
+    newEnum.resolve = enumOpts.resolve;
+  }
+
+  return newEnum;
+}
+
+export function pgMutation(newPGMutation: PGMutationType) {
+  if (! newPGMutation.name) {
+    throw new Error('Invalid pgMutation: Name is required');
+  } else if (! newPGMutation.description) {
+    throw new Error(`Invalid pgMutation: Description is required for ${newPGMutation.name}`);
+  } else if (! newPGMutation.columns) {
+    throw new Error(`Invalid pgMutation: Columns are required for ${newPGMutation.name}`);
+  } else if (! newPGMutation.payload) {
+    throw new Error(`Invalid pgMutation: Payload is required for ${newPGMutation.name}`);
+  } else if (! newPGMutation.resolve) {
+    throw new Error(`Invalid pgMutation: Resolve is required for ${newPGMutation.name}`);
+  } else if (! newPGMutation.hasOwnProperty('allowedRoles')) {
+    throw new Error(`Invalid pgMutation: Allowed Roles are required for ${newPGMutation.name} but can null if it is a public mutation.`);
+  }
+
+  return {
+    type: new GraphQLObjectType({
+      name: newPGMutation.name,
+      fields: newPGMutation.columns,
+      description: newPGMutation.description,
+    }),
+    args: {
+      input: {
+        type: new GraphQLInputObjectType({
+          name: `${replace(newPGMutation.name, 'Mutation', '')}Input`,
+          fields: newPGMutation.payload,
+        }),
+        description: `Input Validation for ${newPGMutation.name}`,
+      },
+    },
+    resolve: (parent: any, payload: any, {user}:{user: AuthUserType}) => {
+      if (newPGMutation.allowedRoles) {
+        assertHasPermission(user, newPGMutation.allowedRoles);
+      } else if (newPGMutation.allowedEnvironments) {
+        assertEnvironment(newPGMutation.allowedEnvironments);
+      }
+      return newPGMutation.resolve(parent, payload, {user}, knex); // {query, columns, transform} or query
+    },
+  };
+}
+
+type InputObjectType = {
+  name: string,
+  fields: any,
+};
+
+type OutputObjectType = {
+  name: string,
+  fields: any,
+};
+
+/**
+ * [inputObject - Used for payload objects in mutations]
+ */
+export function inputObject(newInputObject: InputObjectType) {
+  if (! newInputObject.name) {
+    throw new Error('Invalid inputObject, Name is required');
+  } else if (! newInputObject.columns) {
+    throw new Error(`Invalid inputObject: Columns are required for ${newInputObject.name}`);
+  }
+
+  return {
+    type: new GraphQLInputObjectType({
+      name: newInputObject.name,
+      fields: newInputObject.columns,
+    }),
+  };
+}
+
+/**
+ * [outputObject - Used for column objects inside mutations]
+ */
+export function outputObject(newOutputObject: OutputObjectType) {
+  if (! newOutputObject.name) {
+    throw new Error('Invalid outputObject, Name is required');
+  } else if (! newOutputObject.columns) {
+    throw new Error(`Invalid outputObject: Columns are required for ${newOutputObject.name}`);
+  }
+
+  const outputObj = {
+    type: new GraphQLObjectType({
+      name: newOutputObject.name,
+      fields: newOutputObject.columns,
+    }),
+    list() {
+      outputObj.type = new GraphQLList(outputObj.type);
+      return outputObj;
+    },
+  };
+
+  return outputObj;
+}
+
+export function schema(newSchema: SchemaObjectType) {
+  if (! newSchema.queries) {
+    throw new Error('Invalid schema: Queries are required');
+  } else if (! newSchema.mutations) {
+    throw new Error('Invalid schema: Mutations are required');
+  }
+
+  return new GraphQLSchema({
+    query: new GraphQLObjectType({
+      name: 'RootQuery',
+      fields: () => newSchema.queries,
+    }),
+    mutation: new GraphQLObjectType({
+      name: 'RootMutation',
+      fields: () => newSchema.mutations,
+    }),
+  });
+}
+
 export function pgObject(newPGObject: PGObjectType) {
   if (! newPGObject.name) {
     throw new Error('Invalid pgObject: Name is required');
-  } else if (! newPGObject.description) {
-    throw new Error('Invalid pgObject: Description is required');
   } else if (! newPGObject.columns) {
-    throw new Error('Invalid pgObject: Columns is required');
-  } else if (! newPGObject.filters) {
-    throw new Error('Invalid pgObject: Filters is required');
+    throw new Error(`Invalid pgObject: Columns is required for ${newPGObject.name}`);
   } else if (! newPGObject.resolve) {
-    throw new Error('Invalid pgObject: Resolve is required');
+    throw new Error(`Invalid pgObject: Resolve is a required function for ${newPGObject.name}`);
   }
 
   return new GraphQLObjectType({
     name: newPGObject.name,
-    description: newPGObject.description,
+    description: newPGObject.description || `No description for ${newPGObject.name}`,
     fields: newPGObject.columns,
-    args: collectionArgs(newPGObject.filters),
+    args: collectionArgs(newPGObject.filters || {}),
     resolve(parent: any, filters: any, {user}:{user: AuthUserType}) {
       if (newPGObject.allowedRoles) {
         assertHasPermission(user, newPGObject.allowedRoles);
@@ -94,7 +271,7 @@ export function pgObject(newPGObject: PGObjectType) {
         assertEnvironment(newPGObject.allowedEnvironments);
       }
 
-      let result = newPGObject.resolve(parent, filters, {user}, knex); // {query, columns, postProcessing} or query
+      let result = newPGObject.resolve(parent, filters, {user}, knex); // {query, columns, transform} or query
       if (! (result && result.query)) {
         result = {query: result, columns: null};
       }
@@ -112,35 +289,19 @@ export function pgObject(newPGObject: PGObjectType) {
 /* Specifics */
 
 export function createdAt() {
-  return {
-    type: GQLDate,
-    description:
-      'The ISO 8601 date format of the time that this resource was created.',
-  };
+  return date('the time that this resource was created');
 }
 
 export function updatedAt() {
-  return {
-    type: GQLDate,
-    description:
-      'The ISO 8601 date format of the time that this resource was edited.',
-  };
+  return date('the time that this resource was edited');
 }
 
 export function deletedAt() {
-  return {
-    type: GQLDate,
-    description:
-      'The ISO 8601 date format of the time that this resource was deleted.',
-  };
+  return date('the time that this resource was deleted');
 }
 
 export function limit() {
-  return {
-    type: GraphQLInt,
-    description:
-      'Limit the resultset of a collection query',
-  };
+  return int('Limit the resultset of a collection query');
 }
 
 export function id() {
@@ -150,13 +311,8 @@ export function id() {
   };
 }
 
-
 export function offset() {
-  return {
-    type: GraphQLInt,
-    description:
-      'Offset the resultset of a collection query',
-  };
+  return int('Offset the resultset of a collection query');
 }
 
 export function sortDir() {
@@ -167,10 +323,7 @@ export function sortDir() {
 }
 
 export function sortName() {
-  return {
-    type: GraphQLString,
-    description: 'The name of the sort',
-  };
+  return string('The name of the sort');
 }
 
 /**
