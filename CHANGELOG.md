@@ -1,3 +1,20 @@
+## [v0.4.0]
+> October 28, 2016
+
+- Feature: Added support for non-null, lists and enum
+- Feature: Created functions for inputObject/outputObject in GQL
+- Feature: Create pgMutation function
+- Feature: Created function for creating a GQL schema
+
+- Bugfix: If using GQL plugin but DisableJWTAuth was true, the server would fail with a non-descript error
+
+
+### Breaking Changes:
+- Moved all the GQL types to the root `gql` object
+- Removed the GQL input helpers in favor of `pgMutation`
+- No longer export knexQuery, which was a helper function for GQL queries/mutations
+- collectionArgs and recordArgs are no longer exported, they are used internally
+
 ## [v0.3.1]
 > October 17, 2016
 
