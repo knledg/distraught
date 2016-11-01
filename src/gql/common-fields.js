@@ -199,12 +199,12 @@ export function inputObject(newInputObject: InputObjectType) {
     throw new Error(`Invalid inputObject: Columns are required for ${newInputObject.name}`);
   }
 
-  return {
-    type: new GraphQLInputObjectType({
-      name: newInputObject.name,
-      fields: newInputObject.columns,
-    }),
-  };
+  const type = new GraphQLInputObjectType({
+    name: newInputObject.name,
+    fields: newInputObject.columns,
+  });
+
+  return buildGeneric(type, `input representing: ${newInputObject.name.toLowerCase()}`);
 }
 
 /**
@@ -217,18 +217,12 @@ export function outputObject(newOutputObject: OutputObjectType) {
     throw new Error(`Invalid outputObject: Columns are required for ${newOutputObject.name}`);
   }
 
-  const outputObj = {
-    type: new GraphQLObjectType({
-      name: newOutputObject.name,
-      fields: newOutputObject.columns,
-    }),
-    list() {
-      outputObj.type = new GraphQLList(outputObj.type);
-      return outputObj;
-    },
-  };
+  const type = new GraphQLObjectType({
+    name: newOutputObject.name,
+    fields: newOutputObject.columns,
+  });
 
-  return outputObj;
+  return buildGeneric(type, `output representing: ${newOutputObject.name.toLowerCase()}`);
 }
 
 export function schema(newSchema: SchemaObjectType) {
