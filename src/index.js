@@ -16,3 +16,11 @@ export {knex} from './lib/knex';
 export {sg, sgHelper} from './lib/sendgrid';
 export {slack} from './lib/slack';
 export {TError} from './lib/terror';
+export {
+  fetchOne,
+  fetchMany,
+  create,
+  createOne,
+  update,
+  updateOne,
+} from './lib/queries';
