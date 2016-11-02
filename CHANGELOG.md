@@ -1,3 +1,9 @@
+## [v0.4.1]
+> November 28, 2016
+
+- Feature: GQL Input/Output Objects now have functionality from buildGeneric() (ability to chain the `list()` or `required()` commands)
+- Feature: Knex Helper Queries: fetchOne, fetchMany, create, createOne, update, updateOne
+
 ## [v0.4.0]
 > October 28, 2016
 
