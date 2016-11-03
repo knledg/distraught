@@ -1,5 +1,11 @@
+## [v0.5.0]
+> November 3, 2016
+
+### Breaking Changes:
+- Don't store Heretic outcomes in RabbitMQ
+
 ## [v0.4.1]
-> November 28, 2016
+> November 2, 2016
 
 - Feature: GQL Input/Output Objects now have functionality from buildGeneric() (ability to chain the `list()` or `required()` commands)
 - Feature: Knex Helper Queries: fetchOne, fetchMany, create, createOne, update, updateOne

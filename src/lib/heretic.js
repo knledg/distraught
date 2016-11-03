@@ -9,4 +9,5 @@ export const heretic = new Heretic(process.env.AMQP_URL, knex, {
       Application: 'Workers',
     },
   },
+  writeOutcomes: false,
 });
