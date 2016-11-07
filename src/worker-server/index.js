@@ -9,6 +9,10 @@ type QueueType = {
   concurrency?: number,
   isEnabled: Function|boolean,
   handler: Function,
+  alertAt?: number,
+  killAt?: number,
+  onKilled?: Function,
+  debug?: boolean,
 };
 type OptionsType = {
   requiredEnv?: any,
@@ -33,6 +37,36 @@ export class WorkerServer extends GenericServer {
     super(options);
     this.options = options;
     this.listenForErrors();
+  }
+
+  setAlertAt(queue: QueueType) {
+    if (! queue.alertAt) {
+      return null;
+    }
+
+    return setTimeout(function() {
+      console.log(chalk.yellow.bold(`A job in ${queue.name} is taking a long time to fulfill`), chalk.green.bold('[alert]')); // eslint-disable-line
+    }, queue.alertAt);
+  }
+
+  setKillAt(queue: QueueType, job: Object, done: Function) {
+    if (! queue.killAt) {
+      return null;
+    }
+
+    return setTimeout(function() {
+      console.log(chalk.red.bold(`Killing job in ${queue.name}, exceeded maximum timeout`), chalk.green.bold('[killing-job]'), job); // eslint-disable-line
+
+      const error = new Error(`Exceeded maximum timeout of ${Number(queue.killAt)} milleseconds`);
+      done(error);
+
+      if (queue.onKilled) {
+        queue.onKilled({
+          name: queue.name,
+          job,
+        });
+      }
+    }, queue.killAt);
   }
 
   listenForErrors() {
@@ -69,8 +103,28 @@ export class WorkerServer extends GenericServer {
       }
 
       if (isEnabled) {
-        heretic.process(queue.name, queue.concurrency || 1, queue.handler);
         console.log(chalk.bold.blue(queue.name), chalk.green.bold('[enabled]')); // eslint-disable-line
+        heretic.process(queue.name, queue.concurrency || 1, (job: Object, message: string, done: Function) => {
+          if (queue.debug) {
+            console.log(chalk.cyan.blue(`${queue.name}`), chalk.blue.bold('[started]')); // eslint-disable-line
+          }
+
+          const executingPromise = queue.handler(job, message, done);
+
+          const alertAt = this.setAlertAt(queue, executingPromise);
+          const killAt = this.setKillAt(queue, job, done);
+
+          return executingPromise
+            .tap((result) => {
+              if (queue.debug && ! (result instanceof Error)) {
+                console.log(chalk.cyan.blue(`${queue.name}`), chalk.green.bold('[completed]')); // eslint-disable-line
+              }
+            })
+            .finally((result) => {
+              clearTimeout(alertAt);
+              clearTimeout(killAt);
+            });
+        });
       } else {
         console.log(chalk.bold.blue(queue.name), chalk.red.bold('[disabled]')); // eslint-disable-line
       }
