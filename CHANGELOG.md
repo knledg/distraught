@@ -1,3 +1,9 @@
+## [v0.5.1]
+> November 7, 2016
+
+- Feature: Upgrade hapi-graphql to fix a bug where sometimes error.output wasn't defined which caused a runtime error
+- Upgrade WorkerServer to accept alertAt, killAt, onKilled, and debug options
+
 ## [v0.5.0]
 > November 3, 2016
 
