@@ -1,6 +1,7 @@
 /* @flow */
 import {each, isFunction} from 'lodash';
 import {GenericServer} from '../lib/generic-server';
+import {log} from '../lib/logger';
 import chalk from 'chalk';
 import {CronJob} from 'cron';
 
@@ -58,9 +59,9 @@ export class CronServer extends GenericServer {
 
       if (isEnabled) {
         this.startCron(cron);
-        console.log(chalk.bold.blue(cron.name), chalk.green.bold('[enabled]')); // eslint-disable-line
+        log(chalk.bold.blue(cron.name), chalk.green.bold('[enabled]'));
       } else {
-        console.log(chalk.bold.blue(cron.name), chalk.red.bold('[disabled]')); // eslint-disable-line
+        log(chalk.bold.blue(cron.name), chalk.red.bold('[disabled]'));
       }
     });
   }

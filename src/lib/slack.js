@@ -1,8 +1,8 @@
 // @flow
-/* eslint-disable no-console */
 import Promise from 'bluebird';
 import axios from 'axios';
 import chalk from 'chalk';
+import {log} from './logger';
 
 const url = process.env.SLACK_WEBHOOK_URL;
 
@@ -54,7 +54,7 @@ export const slack = {
   send(data: SlackPayload): Promise {
     if (!url) {
       if (process.env.NODE_ENV === 'development') {
-        console.log(chalk.magenta.bold('Slack Notification (Not Sent): '), getMessage(data));
+        log(chalk.magenta.bold('Slack Notification (Not Sent): '), getMessage(data));
         return Promise.resolve();
       }
       return Promise.reject('Slack Webhook URL not found');
