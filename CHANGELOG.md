@@ -1,3 +1,9 @@
+## [v0.5.4]
+> November 8, 2016
+
+- Feature: Improved worker rollbar reporting
+
+
 ## [v0.5.3]
 > November 8, 2016
 
