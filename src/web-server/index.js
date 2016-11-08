@@ -1,6 +1,7 @@
 /* @flow */
 import {each, map, compact, isArray, isEmpty} from 'lodash';
 import chalk from 'chalk';
+import rollbar from 'rollbar';
 
 // Default Pres
 import {onlyOnDevelop, requireJWTAuth, requiresRole} from './pre';
@@ -12,6 +13,8 @@ import glob from 'glob';
 import {gql} from '../gql';
 
 import {TError} from '../lib/terror';
+
+import {log} from '../lib/logger';
 import {GenericServer} from '../lib/generic-server';
 
 const versionRegex = new RegExp(/v[0-9]+$/);
@@ -148,10 +151,14 @@ export class HTTPServer extends GenericServer {
           context: {
             user: request.auth.credentials,
           },
-          formatError: (error: {message: string, locations: Array<string>, stack: string}) => {
-            /* eslint-disable no-console */
-            console.error(chalk.red.bold('==> ', error));
-            /* eslint-enable no-console */
+          formatError: (error: {message: string, locations: Array<string>, stack: string}, context: {query: string, operationName: any, variables: any}) => {
+            rollbar.handleErrorWithPayloadData(error, {custom: context, level: 'error'});
+            log(
+              chalk.red.bold('==> ', error),
+              chalk.blue.bold(context.query || 'No query defined'),
+              chalk.blue.bold(context.variables ? JSON.stringify(context.variables) : 'No variables')
+            );
+
             return process.env.NODE_ENV !== 'development' ? {message: error.message} : {
               message: error.message,
               locations: error.locations,
@@ -274,7 +281,7 @@ export class HTTPServer extends GenericServer {
    */
   start() {
     this.hapi.start(() => {
-      console.log(chalk.bold.blue(`Web Server: ${this.hapi.info.uri}`), chalk.bold.green('[enabled]')); // eslint-disable-line
+      log(chalk.bold.blue(`Web Server: ${this.hapi.info.uri}`), chalk.bold.green('[enabled]'));
     });
   }
 }

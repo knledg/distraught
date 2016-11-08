@@ -24,3 +24,4 @@ export {
   update,
   updateOne,
 } from './lib/queries';
+export {log} from './lib/logger';

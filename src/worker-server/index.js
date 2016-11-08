@@ -3,6 +3,8 @@ import {each, isFunction} from 'lodash';
 import {heretic} from '../lib/heretic';
 import {GenericServer} from '../lib/generic-server';
 import chalk from 'chalk';
+import {log} from '../lib/logger';
+import rollbar from 'rollbar';
 
 type QueueType = {
   name: string,
@@ -45,7 +47,7 @@ export class WorkerServer extends GenericServer {
     }
 
     return setTimeout(function() {
-      console.log(chalk.yellow.bold(`A job in ${queue.name} is taking a long time to fulfill`), chalk.green.bold('[alert]')); // eslint-disable-line
+      log(chalk.yellow.bold(`A job in ${queue.name} is taking a long time to fulfill`), chalk.green.bold('[alert]'));
     }, queue.alertAt);
   }
 
@@ -55,7 +57,7 @@ export class WorkerServer extends GenericServer {
     }
 
     return setTimeout(function() {
-      console.log(chalk.red.bold(`Killing job in ${queue.name}, exceeded maximum timeout`), chalk.green.bold('[killing-job]'), job); // eslint-disable-line
+      log(chalk.red.bold(`Killing job in ${queue.name}, exceeded maximum timeout`), chalk.green.bold('[killing-job]'), job);
 
       const error = new Error(`Exceeded maximum timeout of ${Number(queue.killAt)} milleseconds`);
       done(error);
@@ -74,13 +76,15 @@ export class WorkerServer extends GenericServer {
     // can never be handled correctly (malformed JSON, job id doesn't exist in the
     // database, etc.). The message will be dead-lettered for later inspection (by you)
     heretic.on('jobError', err => {
-      console.error(chalk.red.bold('Error with job!'), err); // eslint-disable-line
+      rollbar.reportMessageWithPayloadData(err, {level: 'error'});
+      log(chalk.red.bold('Error with job!'), err);
     });
 
     // the 'jobFailed' event happens when a job fails, but in a recoverable way. it
     // will be automatically retried up to the maximum number of retries.
     heretic.on('jobFailed', err => {
-      console.error(chalk.red.bold('Job execution failed!'), err); // eslint-disable-line
+      rollbar.reportMessageWithPayloadData(err, {level: 'error'});
+      log(chalk.red.bold('Job execution failed!'), err);
     });
   }
 
@@ -103,10 +107,10 @@ export class WorkerServer extends GenericServer {
       }
 
       if (isEnabled) {
-        console.log(chalk.bold.blue(queue.name), chalk.green.bold('[enabled]')); // eslint-disable-line
+        log(chalk.bold.blue(queue.name), chalk.green.bold('[enabled]'));
         heretic.process(queue.name, queue.concurrency || 1, (job: Object, message: string, done: Function) => {
           if (queue.debug) {
-            console.log(chalk.cyan.blue(`${queue.name}`), chalk.blue.bold('[started]')); // eslint-disable-line
+            log(chalk.cyan.blue(`${queue.name}`), chalk.blue.bold('[started]'));
           }
 
           const executingPromise = queue.handler(job, message, done);
@@ -117,7 +121,7 @@ export class WorkerServer extends GenericServer {
           return executingPromise
             .tap((result) => {
               if (queue.debug && ! (result instanceof Error)) {
-                console.log(chalk.cyan.blue(`${queue.name}`), chalk.green.bold('[completed]')); // eslint-disable-line
+                log(chalk.cyan.blue(`${queue.name}`), chalk.green.bold('[completed]'));
               }
             })
             .finally((result) => {
@@ -126,7 +130,7 @@ export class WorkerServer extends GenericServer {
             });
         });
       } else {
-        console.log(chalk.bold.blue(queue.name), chalk.red.bold('[disabled]')); // eslint-disable-line
+        log(chalk.bold.blue(queue.name), chalk.red.bold('[disabled]'));
       }
     });
   }

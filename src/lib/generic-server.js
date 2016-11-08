@@ -1,6 +1,7 @@
 /* @flow */
 import assertEnvironment from 'assert-env';
 import chalk from 'chalk';
+import {log} from './logger';
 
 const REQUIRED_ENV = [
   'NODE_PATH', 'NODE_ENV', 'DATABASE_URL', 'APP_NAME', 'AMQP_URL',
@@ -20,7 +21,7 @@ export class GenericServer {
     try {
       assertEnvironment(REQUIRED_ENV);
     } catch (err) {
-      console.log(chalk.red.bold(err.message.substr(0, err.message.length - 1))); // eslint-disable-line
+      log(chalk.red.bold(err.message.substr(0, err.message.length - 1)));
       process.exit(1);
     }
 
@@ -32,7 +33,7 @@ export class GenericServer {
     try {
       assertEnvironment(this.options.requiredEnv);
     } catch (err) {
-      console.log(chalk.red.bold(err.message.substr(0, err.message.length - 1))); // eslint-disable-line
+      log(chalk.red.bold(err.message.substr(0, err.message.length - 1)));
       process.exit(1);
     }
   }

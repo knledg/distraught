@@ -1,5 +1,6 @@
 /* @flow */
 import {includes, isString, assign, noop} from 'lodash';
+import {GraphQLError} from 'graphql';
 import rollbar from 'rollbar';
 import {TError} from './terror';
 
@@ -55,10 +56,10 @@ class ErrorHandler {
    * @param  {object} error
    * @param  {object} tags
    */
-  hapiRequest(request: any, error: Error|string, tags: TagType) {
+  hapiRequest(request: any, error: GraphQLError|Error|string, tags?: TagType) {
     if (error instanceof TError) {
       return this.terrorWithRequest(error, request);
-    } else if (error instanceof Error) {
+    } else if (error instanceof Error || error instanceof GraphQLError) {
       return rollbar.handleError(error, this.rollbarRequest(request));
     } else if (isString(error)) {
       return rollbar.reportMessage(error, 'error', this.rollbarRequest(request));
@@ -112,6 +113,8 @@ class ErrorHandler {
     if (response instanceof Error) {
       // when an Error is simply thrown and caught by nodeify
       err = response;
+    } else if (! response.data) {
+      return null; // Not enough information to generate error
     } else {
       // Hapi caught a tag that had "error" in it
       err = new Error();
