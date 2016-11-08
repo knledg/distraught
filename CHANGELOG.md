@@ -1,5 +1,10 @@
+## [v0.5.3]
+> November 8, 2016
+
+- Feature: Modify worker rollbar reporting
+
 ## [v0.5.2]
-> November 7, 2016
+> November 8, 2016
 
 - Feature: Logger that supports logentries, console, and chalk
 - Upgrade hapi-graphql to provide additional context around a GQL error
