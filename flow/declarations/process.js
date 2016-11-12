@@ -4,6 +4,7 @@ declare var process: { // eslint-disable-line
     AMQP_URL: string,
     APP_NAME: string,
     DATABASE_URL: string,
+    REDIS_URL: string,
     DISABLE_JWT_AUTH: string,
     DYNO: string,
     GIT_SHA: string,

@@ -58,6 +58,7 @@ type OptionsType = {
   pres?: any,
   routes?: Array<RouteType>,
   setAuthStrategies?: Function,
+  subscriptions?: Array<string>,
 };
 
 
@@ -134,6 +135,7 @@ export class HTTPServer extends GenericServer {
     this.registerDefaultPlugins();
     this.registerPlugins();
     this.registerRoutes();
+    this.registerSubscriptions();
   }
 
   enableGraphQLPlugin() {
@@ -207,6 +209,7 @@ export class HTTPServer extends GenericServer {
       require('inert'),
       require('vision'),
       require('hapi-auth-jwt2'),
+      require('nes'),
     ];
 
     // Add swagger if not on prod
@@ -274,6 +277,15 @@ export class HTTPServer extends GenericServer {
 
   registerRoute(route: {}) {
     this.hapi.route(route);
+  }
+
+  registerSubscriptions() {
+    if (this.options.subscriptions && this.options.subscriptions.length) {
+      if (!process.env.REDIS_URL) {
+        throw new TError('REDIS_URL is required for subscriptions', {});
+      }
+      each(this.options.subscriptions, subscription => this.hapi.subscription(subscription));
+    }
   }
 
   /**
