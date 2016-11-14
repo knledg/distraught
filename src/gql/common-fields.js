@@ -129,6 +129,13 @@ export function options(enumOpts: {name: string, description: string, resolve?: 
       newEnum.type = new GraphQLList(newEnum.type);
       return newEnum;
     },
+    getValue(which) {
+      if (!newEnum.type._enumConfig.values[which]) {
+        throw new Error(`Enum "${newEnum.type.name}" does not contain a value named "${which}"`);
+      }
+
+      return newEnum.type._enumConfig.values[which].value;
+    },
   };
 
   if (enumOpts.resolve) {
