@@ -3,19 +3,27 @@ import {map, get} from 'lodash';
 import {gql} from '../gql';
 
 export function fetchMany(knex: Function, tableName: string, filters: any) {
-  const modifiedFilters = gql.helpers.toSnakeCase(filters);
-  return knex(tableName)
-    .where(modifiedFilters)
+  const query = knex(tableName)
     .debug(process.env.KNEX_DEBUG);
+
+  if (filters) {
+    return query.where(gql.helpers.toSnakeCase(filters));
+  }
+
+  return query;
 }
 
 export function fetchOne(knex: Function, tableName: string, filters: any) {
-  const modifiedFilters = gql.helpers.toSnakeCase(filters);
-  return knex(tableName)
+  const query = knex(tableName)
     .first('*')
-    .where(modifiedFilters)
     .debug(process.env.KNEX_DEBUG)
     .limit(1);
+
+  if (filters) {
+    return query.where(gql.helpers.toSnakeCase(filters));
+  }
+
+  return query;
 }
 
 /**
