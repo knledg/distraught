@@ -110,21 +110,20 @@ export class WorkerServer extends GenericServer {
         log(chalk.bold.blue(queue.name), chalk.green.bold('[enabled]'));
         heretic.process(queue.name, queue.concurrency || 1, (job: Object, message: string, done: Function) => {
           if (queue.debug) {
-            log(chalk.cyan.blue(`${queue.name}`), chalk.blue.bold('[started]'));
+            log(chalk.cyan.bold(`${queue.name} ${job.payload.id}`), chalk.blue.bold('[started]'));
           }
 
           const executingPromise = queue.handler(job, message, done);
-
           const alertAt = this.setAlertAt(queue, executingPromise);
           const killAt = this.setKillAt(queue, job, done);
 
           return executingPromise
             .tap((result) => {
               if (queue.debug && ! (result instanceof Error)) {
-                log(chalk.cyan.blue(`${queue.name}`), chalk.green.bold('[completed]'));
+                log(chalk.cyan.bold(`${queue.name}`), chalk.green.bold('[completed]'));
               }
             })
-            .finally((result) => {
+            .finally(() => {
               clearTimeout(alertAt);
               clearTimeout(killAt);
             });

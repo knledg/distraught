@@ -1,5 +1,5 @@
 /* @flow */
-import {replace, assign, isFunction} from 'lodash';
+import {replace, assign, isFunction, cloneDeep} from 'lodash';
 import {
   GraphQLString, GraphQLInt, GraphQLBoolean, GraphQLFloat, GraphQLList,
   GraphQLNonNull, GraphQLID, GraphQLEnumType, GraphQLObjectType,
@@ -62,6 +62,10 @@ const SORT_ENUM = new GraphQLEnumType({
   },
 });
 
+// Once a GQL object has been defined and has a name, it cannot be redefined, so if we want to reuse a defined object, we need to pull it from the singleton instead of using the `new` keyword.
+// Example: Two different files might use `UserStatusEnum.list()` and normally that would throw an error but the singleton will prevent that
+const uniqueObjectSingleton = {};
+
 /* Generics */
 
 function buildGeneric(type: any, description: string, resolve: ?Function) {
@@ -115,34 +119,57 @@ export function options(enumOpts: {name: string, description: string, resolve?: 
     throw new Error('Invalid enum: Values are required');
   }
 
-  const newEnum: EnumType = {
+  const gqlEnum: EnumType = {
     type: new GraphQLEnumType({
       name: enumOpts.name,
       values: enumOpts.values,
     }),
     description: enumOpts.description,
     required() {
-      newEnum.type = new GraphQLNonNull(newEnum.type);
-      return newEnum;
-    },
-    list() {
-      newEnum.type = new GraphQLList(newEnum.type);
-      return newEnum;
-    },
-    getValue(which) {
-      if (!newEnum.type._enumConfig.values[which]) {
-        throw new Error(`Enum "${newEnum.type.name}" does not contain a value named "${which}"`);
+      const newGqlEnum = cloneDeep(gqlEnum);
+      newGqlEnum.type.name += 'Required';
+
+      // Return singleton instance of enum
+      const name = newGqlEnum.type.name;
+      if (uniqueObjectSingleton[name]) {
+        return uniqueObjectSingleton[name];
       }
 
-      return newEnum.type._enumConfig.values[which].value;
+      newGqlEnum.type = new GraphQLNonNull(newGqlEnum.type);
+      uniqueObjectSingleton[name] = newGqlEnum; // Push to singleton
+
+
+      return newGqlEnum;
+    },
+    list() {
+      const newGqlEnum = cloneDeep(gqlEnum);
+      newGqlEnum.type.name += 'List';
+
+      // Return singleton instance of enum
+      const name = newGqlEnum.type.name;
+      if (uniqueObjectSingleton[name]) {
+        return uniqueObjectSingleton[name];
+      }
+
+      newGqlEnum.type = new GraphQLList(newGqlEnum.type);
+      uniqueObjectSingleton[name] = newGqlEnum; // Push to singleton
+
+      return newGqlEnum;
+    },
+    getValue(which) {
+      if (!gqlEnum.type._enumConfig.values[which]) {
+        throw new Error(`Enum "${gqlEnum.type.name}" does not contain a value named "${which}"`);
+      }
+
+      return gqlEnum.type._enumConfig.values[which].value;
     },
   };
 
   if (enumOpts.resolve) {
-    newEnum.resolve = enumOpts.resolve;
+    gqlEnum.resolve = enumOpts.resolve;
   }
 
-  return newEnum;
+  return gqlEnum;
 }
 
 export function pgMutation(newPGMutation: PGMutationType) {
@@ -204,6 +231,8 @@ export function inputObject(newInputObject: InputObjectType) {
     throw new Error('Invalid inputObject, Name is required');
   } else if (! newInputObject.columns) {
     throw new Error(`Invalid inputObject: Columns are required for ${newInputObject.name}`);
+  } else if (uniqueObjectSingleton[newInputObject.name]) {
+    return uniqueObjectSingleton[newInputObject.name]; // If input object was already defined, return singleton instance
   }
 
   const type = new GraphQLInputObjectType({
@@ -222,6 +251,8 @@ export function outputObject(newOutputObject: OutputObjectType) {
     throw new Error('Invalid outputObject, Name is required');
   } else if (! newOutputObject.columns) {
     throw new Error(`Invalid outputObject: Columns are required for ${newOutputObject.name}`);
+  } else if (uniqueObjectSingleton[newOutputObject.name]) {
+    return uniqueObjectSingleton[newOutputObject.name]; // If input object was already defined, return singleton instance
   }
 
   const type = new GraphQLObjectType({
