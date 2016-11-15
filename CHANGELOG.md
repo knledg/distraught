@@ -1,3 +1,12 @@
+## [v0.6.0]
+> November 14, 2016
+
+- Feature: Upgrade Flow to 0.35
+- Feature: On enums, you can call gqlEnum.getValue(key) to easily retrieve the value from the object
+- Feature: Uncaught WebServer errors will show the message, the stack, and a TError Payload if a TError was thrown but never caught (it will warn to use a TError if no TError payload exists)
+- Feature: GQL Input Objects, Output Objects, and Enums use a singleton object to return the object if a matching name exists.
+- Bugfix: fetch and fetchOne queries were not snake_casing the keys of the filters before applying them
+
 ## [v0.5.4]
 > November 8, 2016
 

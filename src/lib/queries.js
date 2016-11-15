@@ -3,15 +3,17 @@ import {map, get} from 'lodash';
 import {gql} from '../gql';
 
 export function fetchMany(knex: Function, tableName: string, filters: any) {
+  const modifiedFilters = gql.helpers.toSnakeCase(filters);
   return knex(tableName)
-    .where(filters)
+    .where(modifiedFilters)
     .debug(process.env.KNEX_DEBUG);
 }
 
 export function fetchOne(knex: Function, tableName: string, filters: any) {
+  const modifiedFilters = gql.helpers.toSnakeCase(filters);
   return knex(tableName)
     .first('*')
-    .where(filters)
+    .where(modifiedFilters)
     .debug(process.env.KNEX_DEBUG)
     .limit(1);
 }

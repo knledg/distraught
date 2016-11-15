@@ -2,6 +2,7 @@
 /* eslint-disable no-console,no-process-exit */
 import rollbar from 'rollbar';
 import chalk from 'chalk';
+import {get} from 'lodash';
 
 import {errorHandler} from '../lib/error-handler';
 import {log} from '../lib/logger';
@@ -44,18 +45,17 @@ if (process.env.ROLLBAR_TOKEN) {
     });
   });
 
-  process.on('unhandledRejection', function(reason: Error, promise: Promise): void {
-    log(chalk.red.bold(reason.stack));
-    errorHandler.error(reason);
+  process.on('unhandledRejection', function(err: Error, promise: Promise): void {
+    log(chalk.red.bold(err.message), chalk.yellow.bold(err.stack), chalk.blue.bold(get(err, '__TErrorPayload', 'No Payload Specified, Catch The Error, Throw A TError And Pass A Payload Next Time. Syntax: `throw new TError(err, payload)`')));
+    errorHandler.error(err);
   });
 } else {
-  process.on('unhandledRejection', function(reason: Error, promise: Promise): void {
-    log(chalk.red.bold(reason.stack));
+  process.on('unhandledRejection', function(err: Error, promise: Promise): void {
+    log(chalk.red.bold(err.message), chalk.yellow.bold(err.stack), chalk.blue.bold(get(err, '__TErrorPayload', 'No Payload Specified, Catch The Error, Throw A TError And Pass A Payload Next Time. Syntax: `throw new TError(err, payload)`')));
   });
 
   process.on('uncaughtException', function(err: Error): void {
-    log(chalk.red.bold('Uncaught exception:'));
-    log(chalk.red.bold(err.stack));
+    log(chalk.red.bold(`Uncaught Exception: ${err.message}`), chalk.yellow(err.stack), chalk.blue.bold(get(err, '__TErrorPayload', 'No Payload Specified, Catch The Error, Throw A TError And Pass A Payload Next Time. Syntax: `throw new TError(err, payload)`')));
     process.exit(1);
   });
 }
