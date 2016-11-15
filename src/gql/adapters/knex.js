@@ -1,6 +1,8 @@
   /* @flow */
-import {camelCase, mapKeys} from 'lodash';
+import {camelCase, mapKeys, get} from 'lodash';
+import chalk from 'chalk';
 import {knex} from '../../lib/knex';
+import {log} from '../../lib/logger';
 import Promise from 'bluebird';
 
 import type {Promise as PromiseType} from 'bluebird';
@@ -19,7 +21,7 @@ const MAX_LIMIT = 1000;
 export function knexQuery(filters: any, query: PromiseType, columns: ?string): Promise<*> {
   // Do not edit
   const recordQuery = query
-    .debug(process.env.KNEX_DEBUG)
+    .debug(false) // Handled further down with better logging
     .limit(filters.limit || MAX_LIMIT)
     .offset(filters.offset || 0);
 
@@ -30,9 +32,15 @@ export function knexQuery(filters: any, query: PromiseType, columns: ?string): P
       .clone()
       .first(knex.raw('count(*) AS count')) // overwrite columns with just count
       .limit(1) // overwrite limit with just 1
-      .offset(0)
-      .debug(process.env.KNEX_DEBUG)
-      .then(res => res.count);
+      .offset(0);
+
+    if (process.env.KNEX_DEBUG) {
+      log(chalk.magenta(count.toString()));
+      log(chalk.magenta.bold(recordQuery.toString()));
+    }
+
+    count = count
+      .then(res => get(res, 'count', 0));
 
     if (filters.sortName) {
       if (filters.sortDir === 'desc') {
@@ -55,6 +63,13 @@ export function knexQuery(filters: any, query: PromiseType, columns: ?string): P
       });
   }
 
+  if (process.env.KNEX_DEBUG) {
+    log(chalk.magenta.bold(recordQuery.toString()));
+  }
+
+  if (columns) {
+    recordQuery.columns(columns);
+  }
 
   return recordQuery
     .map(record => mapKeys(record, (value, key) => camelCase(key)));
