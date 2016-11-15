@@ -1,3 +1,10 @@
+## [v0.6.1]
+> November 15, 2016
+
+- Feature: Lock down graphql version to 0.7.* for now
+- Feature: Upgrade to latest lodash
+- Feature: Better knex logging
+
 ## [v0.6.0]
 > November 14, 2016
 

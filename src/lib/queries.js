@@ -1,21 +1,31 @@
 // @flow
 import {map, get} from 'lodash';
+import chalk from 'chalk';
+
 import {gql} from '../gql';
+import {log} from './logger';
+
 
 export function fetchMany(knex: Function, tableName: string, filters: any) {
   const modifiedFilters = gql.helpers.toSnakeCase(filters);
-  return knex(tableName)
+  const query = knex(tableName)
     .where(modifiedFilters)
-    .debug(process.env.KNEX_DEBUG);
+    .debug(false);
+
+  if (process.env.KNEX_DEBUG) log(chalk.magenta.bold(query.toString()));
+  return query;
 }
 
 export function fetchOne(knex: Function, tableName: string, filters: any) {
   const modifiedFilters = gql.helpers.toSnakeCase(filters);
-  return knex(tableName)
+  const query = knex(tableName)
     .first('*')
     .where(modifiedFilters)
-    .debug(process.env.KNEX_DEBUG)
+    .debug(false)
     .limit(1);
+
+  if (process.env.KNEX_DEBUG) log(chalk.magenta.bold(query.toString()));
+  return query;
 }
 
 /**
@@ -33,10 +43,13 @@ export function create(knex: Function, tableName: string, payload: any) {
     return gql.helpers.toSnakeCase(newRecord);
   });
 
-  return knex(tableName)
+  const query = knex(tableName)
     .insert(modifiedPayload)
-    .debug(process.env.KNEX_DEBUG)
+    .debug(false)
     .returning('*');
+
+  if (process.env.KNEX_DEBUG) log(chalk.magenta.bold(query.toString()));
+  return query;
 }
 
 /**
@@ -59,11 +72,14 @@ export function update(knex: Function, tableName: string, filters: any, payload:
   const modifiedFilters = gql.helpers.toSnakeCase(filters);
   const modifiedPayload = gql.helpers.toSnakeCase(payload);
 
-  return knex(tableName)
+  const query = knex(tableName)
     .where(modifiedFilters)
     .returning('*')
     .update(modifiedPayload)
-    .debug(process.env.KNEX_DEBUG);
+    .debug(false);
+
+  if (process.env.KNEX_DEBUG) log(chalk.magenta.bold(query.toString()));
+  return query;
 }
 
 /**
