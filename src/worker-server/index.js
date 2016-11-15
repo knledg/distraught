@@ -1,5 +1,5 @@
 /* @flow */
-import {each, isFunction} from 'lodash';
+import {each, isFunction, startCase} from 'lodash';
 import {heretic} from '../lib/heretic';
 import {GenericServer} from '../lib/generic-server';
 import chalk from 'chalk';
@@ -76,14 +76,14 @@ export class WorkerServer extends GenericServer {
     // can never be handled correctly (malformed JSON, job id doesn't exist in the
     // database, etc.). The message will be dead-lettered for later inspection (by you)
     heretic.on('jobError', err => {
-      rollbar.handleErrorWithPayloadData(new Error(`Job error for ${err.queue_name}`), {level: 'error', custom: err});
+      rollbar.handleErrorWithPayloadData(new Error(`Job error for ${startCase(err.queue_name)}`), {level: 'error', custom: err});
       log(chalk.red.bold('Error with job!'), err);
     });
 
     // the 'jobFailed' event happens when a job fails, but in a recoverable way. it
     // will be automatically retried up to the maximum number of retries.
     heretic.on('jobFailed', err => {
-      rollbar.handleErrorWithPayloadData(new Error(`Job failed for ${err.queue_name}`), {level: 'error', custom: err});
+      rollbar.handleErrorWithPayloadData(new Error(`Job failed for ${startCase(err.queue_name)}`), {level: 'error', custom: err});
       log(chalk.red.bold('Job execution failed!'), err);
     });
   }
