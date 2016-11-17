@@ -1,3 +1,9 @@
+## [v0.6.2]
+> November 17, 2016
+
+- Feature: Redis support for Websockets through Hapi Nes plugin if process.env.REDIS_URL is set
+- Feature: WorkerServer uses startCase on queue name in effort to provide better logging for Rollbar
+
 ## [v0.6.1]
 > November 15, 2016
 
