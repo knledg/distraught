@@ -34,6 +34,7 @@
     "good-console": "^5.3.1",
     "good-logentries": "^2.0.2",
     "graphql": "^0.7.1",
+    "graphql-fields": "^1.0.1",
     "hapi": "^13.2.1",
     "hapi-auth-cookie": "^6.1.1",
     "hapi-auth-jwt2": "^7.1.3",

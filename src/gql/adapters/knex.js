@@ -14,11 +14,9 @@ const MAX_LIMIT = 1000;
  *              Builds and executes queries
  *              Outputs consistent results for a record / collection
  *              Handles defaults]
- * @param  {object}        filters user-specified filters
- * @param  {function}      query knex query builder instance
  * @return {promise}       record|collection {records: [], count}
  */
-export function knexQuery(filters: any, query: PromiseType, columns: ?string): Promise<*> {
+export function knexQuery(filters: any, query: PromiseType, columns: ?string, withCount: boolean = false): Promise<*> {
   // Do not edit
   const recordQuery = query
     .debug(false) // Handled further down with better logging
@@ -28,19 +26,22 @@ export function knexQuery(filters: any, query: PromiseType, columns: ?string): P
   let count;
   // If the user is fetching a single object by id, return just the record, otherwise return {records, count}
   if (filters.isCollection) {
-    count = query
-      .clone()
-      .first(knex.raw('count(*) AS count')) // overwrite columns with just count
-      .limit(1) // overwrite limit with just 1
-      .offset(0);
+    if (withCount) {
+      count = query
+        .clone()
+        .first(knex.raw('count(*) AS count')) // overwrite columns with just count
+        .limit(1) // overwrite limit with just 1
+        .offset(0);
 
-    if (process.env.KNEX_DEBUG) {
-      log(chalk.magenta(count.toString()));
-      log(chalk.magenta.bold(recordQuery.toString()));
+      if (process.env.KNEX_DEBUG) {
+        log(chalk.magenta(count.toString()));
+      }
+
+      count = count
+        .then(res => get(res, 'count', 0));
+    } else {
+      count = Promise.resolve(null);
     }
-
-    count = count
-      .then(res => get(res, 'count', 0));
 
     if (filters.sortName) {
       if (filters.sortDir === 'desc') {
@@ -52,6 +53,10 @@ export function knexQuery(filters: any, query: PromiseType, columns: ?string): P
 
     if (columns) {
       recordQuery.columns(columns);
+    }
+
+    if (process.env.KNEX_DEBUG) {
+      log(chalk.magenta.bold(recordQuery.toString()));
     }
 
     return Promise.props({records: recordQuery, count})
