@@ -1,3 +1,9 @@
+## [v0.6.3]
+> November 21, 2016
+
+- Feature: If a user doesn't request a count on a collection, it won't run the count query. 
+- Exposes fields in `ctx` in the resolve Fn
+
 ## [v0.6.2]
 > November 17, 2016
 

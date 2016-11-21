@@ -1,10 +1,11 @@
 /* @flow */
-import {replace, assign, isFunction, cloneDeep} from 'lodash';
+import {replace, assign, isFunction, cloneDeep, includes, keys} from 'lodash';
 import {
   GraphQLString, GraphQLInt, GraphQLBoolean, GraphQLFloat, GraphQLList,
   GraphQLNonNull, GraphQLID, GraphQLEnumType, GraphQLObjectType,
   GraphQLInputObjectType, GraphQLSchema} from 'graphql';
 import GQLDate from '@jwdotjs/graphql-custom-datetype';
+import graphqlFields from 'graphql-fields';
 
 import {knex} from '../lib/knex';
 import {knexQuery} from './adapters/knex';
@@ -202,13 +203,14 @@ export function pgMutation(newPGMutation: PGMutationType) {
         description: `Input Validation for ${newPGMutation.name}`,
       },
     },
-    resolve: (parent: any, payload: any, {user}:{user: AuthUserType}) => {
+    resolve: (parent: any, payload: any, {user}:{user: AuthUserType}, info: any) => {
       if (newPGMutation.allowedRoles) {
         assertHasPermission(user, newPGMutation.allowedRoles);
       } else if (newPGMutation.allowedEnvironments) {
         assertEnvironment(newPGMutation.allowedEnvironments);
       }
-      return newPGMutation.resolve(parent, payload, {user}, knex); // {query, columns, transform} or query
+      const fields = graphqlFields(info);
+      return newPGMutation.resolve(parent, payload, {user, fields}, knex); // {query, columns, transform} or query
     },
   };
 }
@@ -296,18 +298,21 @@ export function pgObject(newPGObject: PGObjectType) {
     description: newPGObject.description || `No description for ${newPGObject.name}`,
     fields: newPGObject.columns,
     args: collectionArgs(newPGObject.filters || {}),
-    resolve(parent: any, filters: any, {user}:{user: AuthUserType}) {
+    resolve(parent: any, filters: any, {user}:{user: AuthUserType}, info: any) {
       if (newPGObject.allowedRoles) {
         assertHasPermission(user, newPGObject.allowedRoles);
       } else if (newPGObject.allowedEnvironments) {
         assertEnvironment(newPGObject.allowedEnvironments);
       }
 
-      let result = newPGObject.resolve(parent, filters, {user}, knex); // {query, columns, transform} or query
+      const fields = graphqlFields(info);
+      const withCount = !!includes(keys(fields), 'count');
+
+      let result = newPGObject.resolve(parent, filters, {user, fields}, knex); // {query, columns, transform} or query
       if (! (result && result.query)) {
         result = {query: result, columns: null};
       }
-      return knexQuery(filters, result.query, result.columns)
+      return knexQuery(filters, result.query, result.columns, withCount)
         .then(records => {
           if (result.transform && isFunction(result.transform)) {
             return result.transform(records);

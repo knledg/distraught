@@ -47,13 +47,13 @@ export function collection(graphQLObject: GraphQLObjectInstanceType, injectFilte
         }),
       }),
       args: graphQLObject._typeConfig.args, // must return an object
-      resolve: (parent: ?any, filters: any, context: any) => {
+      resolve: (parent: ?any, filters: any, context: any, info: any) => {
         filters.isCollection = true; // inject isCollection so we know how to return the result from knex adapter
 
         if (typeof injectFiltersFromParent === 'function') {
-          filters = injectFiltersFromParent(parent, filters, context);
+          filters = injectFiltersFromParent(parent, filters, context, info);
         }
-        return graphQLObject._typeConfig.resolve(parent, filters, context);
+        return graphQLObject._typeConfig.resolve(parent, filters, context, info);
       },
     };
   }
@@ -73,12 +73,12 @@ export function record(graphQLObject: GraphQLObjectInstanceType, injectFiltersFr
   return {
     type: graphQLObject,
     args: recordArgs(), // must return an object
-    resolve: (parent: ?any, filters: any, context: any) => {
+    resolve: (parent: ?any, filters: any, context: any, info: any) => {
       if (typeof injectFiltersFromParent === 'function') {
-        filters = injectFiltersFromParent(parent, filters, context);
+        filters = injectFiltersFromParent(parent, filters, context, info);
       }
 
-      return graphQLObject._typeConfig.resolve(parent, assign({}, filters, {limit: 1}), context)
+      return graphQLObject._typeConfig.resolve(parent, assign({}, filters, {limit: 1}), context, info)
         .then(records => get(records, '0'));
     },
   };
