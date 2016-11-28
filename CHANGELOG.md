@@ -1,3 +1,8 @@
+## [v0.7.0]
+> November 28, 2016
+
+- Breaking Change: hapi-swagger plugin is enabled on all environments except production
+
 ## [v0.6.3]
 > November 21, 2016
 
