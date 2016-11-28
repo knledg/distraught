@@ -217,6 +217,7 @@ export class HTTPServer extends GenericServer {
       hapiPlugins.push({
         'register': require('hapi-swagger'),
         'options': {
+          schemes: [process.env.NODE_ENV !== 'development' ? 'https' : 'http'],
           info: {
             title: process.env.APP_NAME,
           },

@@ -1,3 +1,8 @@
+## [v0.7.1]
+> November 28, 2016
+
+- Feature: Swagger communicates only on HTTPS on non-development environments
+
 ## [v0.7.0]
 > November 28, 2016
 
