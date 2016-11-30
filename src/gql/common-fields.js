@@ -1,5 +1,5 @@
 /* @flow */
-import {replace, assign, isFunction, cloneDeep, includes, keys} from 'lodash';
+import {replace, assign, isFunction, cloneDeep, includes, keys, forOwn} from 'lodash';
 import {
   GraphQLString, GraphQLInt, GraphQLBoolean, GraphQLFloat, GraphQLList,
   GraphQLNonNull, GraphQLID, GraphQLEnumType, GraphQLObjectType,
@@ -163,6 +163,20 @@ export function options(enumOpts: {name: string, description: string, resolve?: 
       }
 
       return gqlEnum.type._enumConfig.values[which].value;
+    },
+    getKey(value) {
+      let matchedKey;
+      forOwn(gqlEnum.type._enumConfig.values, (obj, key) => {
+        if (obj.value === value) {
+          matchedKey = key;
+        }
+      });
+
+      if (!matchedKey) {
+        throw new Error(`Enum "${gqlEnum.type.name}" does not contain a value with a value of "${value}"`);
+      }
+
+      return matchedKey;
     },
   };
 
