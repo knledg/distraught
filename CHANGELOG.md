@@ -1,8 +1,12 @@
+## [v0.8.0]
+> November 28, 2016
+
+- Breaking Change: process.env.KNEX_DEBUG will toggle pure SQL output while process.env.KNEX_DEFAULT_DEBUG will toggle output of knex objects (default knex debug behavior)
+
 ## [v0.7.2]
 > November 30, 2016
 
 - Feature: GQL Enums now have `getKey` Fn for situations where you have the value but need the GQL key
-
 
 ## [v0.7.1]
 > November 28, 2016

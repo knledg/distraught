@@ -10,6 +10,7 @@ declare var process: { // eslint-disable-line
     GIT_SHA: string,
     HOST: string,
     KNEX_DEBUG: ?string,
+    KNEX_DEFAULT_DEBUG: ?string,
     NODE_ENV: string,
     PORT: string,
     ROLLBAR_TOKEN: string,

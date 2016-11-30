@@ -33,10 +33,6 @@ export function knexQuery(filters: any, query: PromiseType, columns: ?string, wi
         .limit(1) // overwrite limit with just 1
         .offset(0);
 
-      if (process.env.KNEX_DEBUG) {
-        log(chalk.magenta(count.toString()));
-      }
-
       count = count
         .then(res => get(res, 'count', 0));
     } else {
@@ -53,10 +49,6 @@ export function knexQuery(filters: any, query: PromiseType, columns: ?string, wi
 
     if (columns) {
       recordQuery.columns(columns);
-    }
-
-    if (process.env.KNEX_DEBUG) {
-      log(chalk.magenta.bold(recordQuery.toString()));
     }
 
     return Promise.props({records: recordQuery, count})
