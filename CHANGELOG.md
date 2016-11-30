@@ -1,3 +1,9 @@
+## [v0.7.2]
+> November 30, 2016
+
+- Feature: GQL Enums now have `getKey` Fn for situations where you have the value but need the GQL key
+
+
 ## [v0.7.1]
 > November 28, 2016
 
