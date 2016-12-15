@@ -1,3 +1,8 @@
+## [v0.8.1]
+> December 15, 2016
+
+- Bugfix: user `knex.raw` to escape bound parameters in SQL debug output so they are valid queries
+
 ## [v0.8.0]
 > November 28, 2016
 
