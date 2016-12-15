@@ -23,7 +23,7 @@ if (process.env.KNEX_DEBUG) {
       const oldSql = clone(query.sql);
       const bindings = clone(query.bindings);
       const sql = oldSql.replace(/\?/gi, (x) => {
-        return bindings.shift();
+        return knex.raw('?', bindings.shift());
       });
 
       log(chalk.magenta.bold(sql));
