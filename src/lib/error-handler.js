@@ -91,6 +91,7 @@ class ErrorHandler {
       case 301:
       case 302:
       case 304:
+      case 422:
         return null; // statusCodes we don't want to log
       case 400:
         return this.generateInstanceOfError(request, response, 'warning');
