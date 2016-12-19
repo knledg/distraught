@@ -52,7 +52,7 @@ ALTER SEQUENCE heretic_jobs_id_seq OWNED BY heretic_jobs.id;
 ## Todo
 
 - [ ] Webpack Dev-Server
-- [ ] Implement workers / crons
+- [x] Implement workers / crons
 
 ## Interface
 - Utilizes a [Swagger](http://swagger.io/) interface to easily test all HTTP endpoints. Swagger self-documents your HTTP endpoints to make it easy for your frontend developers to access data. [Localhost Swagger](http://localhost:8009/)
