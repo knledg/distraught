@@ -1,3 +1,8 @@
+## [v0.8.2]
+> December 19, 2016
+
+- Bugfix: Debug changes from v0.8.1 were incorrectly passing bindings as-is instead of in an array. This fixes knex debugging. 
+
 ## [v0.8.1]
 > December 15, 2016
 
