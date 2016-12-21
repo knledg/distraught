@@ -1,3 +1,8 @@
+## [v0.9.0]
+> December 21, 2016
+
+- Breaking Change: Distraught explictly ignores HTTP Status Code 422 errors
+
 ## [v0.8.2]
 > December 19, 2016
 
