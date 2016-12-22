@@ -1,3 +1,8 @@
+## [v0.9.1]
+> December 22, 2016
+
+- Feature: Can pause/resume worker queues from the WorkerServer
+
 ## [v0.9.0]
 > December 21, 2016
 

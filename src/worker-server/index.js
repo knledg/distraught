@@ -5,6 +5,7 @@ import {GenericServer} from '../lib/generic-server';
 import chalk from 'chalk';
 import {log} from '../lib/logger';
 import rollbar from 'rollbar';
+import Promise from 'bluebird';
 
 type QueueType = {
   name: string,
@@ -21,6 +22,8 @@ type OptionsType = {
   queues: Array<QueueType>,
 };
 
+const pausedQueues = {};
+
 export class WorkerServer extends GenericServer {
   options: OptionsType = {
     queues: [],
@@ -33,6 +36,52 @@ export class WorkerServer extends GenericServer {
 
   static retry(jobId: number) {
     return heretic.retry(jobId);
+  }
+
+  static pauseFor(queueName: string, timeoutInMS: number) {
+    const queue = heretic.queues[queueName];
+    if (! queue) {
+      return Promise.resolve();
+    }
+
+    log(chalk.bold.blue(queueName), chalk.yellow.bold('[pausing]'));
+    return queue
+      .pause()
+      .then(() => {
+        log(chalk.bold.blue(queueName), chalk.yellow.bold('[paused]'));
+
+        if (timeoutInMS && ! pausedQueues[queueName]) {
+          setTimeout(function() {
+            log(chalk.bold.blue(queueName), chalk.green.bold('[resuming]'));
+            return WorkerServer.resume(queueName);
+          }, timeoutInMS);
+          pausedQueues[queueName] = true;
+        }
+      })
+      .catch((err) => {
+        log(chalk.bold.red(queueName), chalk.white.bold(err.message), chalk.red.bold('[unable to pause]'));
+        throw err;
+      });
+  }
+
+  static resume(queueName: string) {
+    const queue = heretic.queues[queueName];
+    if (! queue) {
+      return Promise.resolve();
+    }
+
+    return queue
+      .start()
+      .then(() => {
+        log(chalk.bold.blue(queueName), chalk.green.bold('[resumed]'));
+        if (pausedQueues[queueName]) {
+          delete pausedQueues[queueName];
+        }
+      })
+      .catch((err) => {
+        log(chalk.bold.red(queueName), chalk.white.bold(err.message), chalk.red.bold('[unable to resume]'));
+        throw err;
+      });
   }
 
   constructor(options: OptionsType) {
