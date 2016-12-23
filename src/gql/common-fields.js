@@ -321,12 +321,13 @@ export function pgObject(newPGObject: PGObjectType) {
 
       const fields = graphqlFields(info);
       const withCount = !!includes(keys(fields), 'count');
+      const withCountEstimate = !!includes(keys(fields), 'countEstimate');
 
       let result = newPGObject.resolve(parent, filters, {user, fields}, knex); // {query, columns, transform} or query
       if (! (result && result.query)) {
         result = {query: result, columns: null};
       }
-      return knexQuery(filters, result.query, result.columns, withCount)
+      return knexQuery(filters, result.query, result.columns, {withCount, withCountEstimate})
         .then(records => {
           if (result.transform && isFunction(result.transform)) {
             return result.transform(records);

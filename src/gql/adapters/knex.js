@@ -1,13 +1,34 @@
   /* @flow */
 import {camelCase, mapKeys, get} from 'lodash';
-import chalk from 'chalk';
 import {knex} from '../../lib/knex';
-import {log} from '../../lib/logger';
 import Promise from 'bluebird';
 
 import type {Promise as PromiseType} from 'bluebird';
+type CountOptionsType = {withCount: boolean, withCountEstimate: boolean};
+
+const defaultCountOptions = {withCount: false, withCountEstimate: false};
 
 const MAX_LIMIT = 1000;
+
+function fetchCount(query: PromiseType, countOptions: CountOptionsType) {
+  if (countOptions.withCount) {
+    return query
+      .first(knex.raw('count(*) AS count')) // overwrite columns with just count
+      .limit(1) // overwrite limit with just 1
+      .offset(0)
+      .then(res => get(res, 'count', 0));
+  }
+  return Promise.resolve(null);
+}
+
+function fetchCountEstimate(query: PromiseType, countOptions: CountOptionsType) {
+  if (countOptions.withCountEstimate) {
+    const clonedQuery = query.toString();
+    return knex.raw('select count_estimate(?) AS "countEstimate"', [clonedQuery])
+      .then(res => get(res, 'rows.0.countEstimate', 0));
+  }
+  return Promise.resolve(null);
+}
 
 /**
  * [knexQuery - Adapter for Knex SQL Query Builder
@@ -16,59 +37,48 @@ const MAX_LIMIT = 1000;
  *              Handles defaults]
  * @return {promise}       record|collection {records: [], count}
  */
-export function knexQuery(filters: any, query: PromiseType, columns: ?string, withCount: boolean = false): Promise<*> {
-  // Do not edit
-  const recordQuery = query
-    .debug(false) // Handled further down with better logging
+export function knexQuery(filters: any, query: PromiseType, columns: ?string, countOptions: CountOptionsType = defaultCountOptions): Promise<*> {
+  // Returns just the record
+  if (! filters.isCollection) {
+    if (columns) {
+      query.columns(columns);
+    }
+
+    return query
+      .limit(1)
+      .offset(0)
+      .map(record => mapKeys(record, (value, key) => camelCase(key)));
+  }
+
+  // Returns Collection: {records, count, countEstimate}
+  const count = fetchCount(query.clone(), countOptions);
+  const countEstimate = fetchCountEstimate(query.clone(), countOptions);
+
+  // OrderBy
+  if (filters.sortName) {
+    if (filters.sortDir === 'desc') {
+      query.orderByRaw(knex.raw('?? desc NULLS LAST', [filters.sortName]));
+    } else {
+      query.orderBy(filters.sortName, filters.sortDir);
+    }
+  }
+
+  // Columns
+  if (columns) {
+    query.columns(columns);
+  }
+
+  // Limit / Offset
+  query
     .limit(filters.limit || MAX_LIMIT)
     .offset(filters.offset || 0);
 
-  let count;
-  // If the user is fetching a single object by id, return just the record, otherwise return {records, count}
-  if (filters.isCollection) {
-    if (withCount) {
-      count = query
-        .clone()
-        .first(knex.raw('count(*) AS count')) // overwrite columns with just count
-        .limit(1) // overwrite limit with just 1
-        .offset(0);
-
-      count = count
-        .then(res => get(res, 'count', 0));
-    } else {
-      count = Promise.resolve(null);
-    }
-
-    if (filters.sortName) {
-      if (filters.sortDir === 'desc') {
-        recordQuery.orderByRaw(knex.raw('?? desc NULLS LAST', [filters.sortName]));
-      } else {
-        recordQuery.orderBy(filters.sortName, filters.sortDir);
-      }
-    }
-
-    if (columns) {
-      recordQuery.columns(columns);
-    }
-
-    return Promise.props({records: recordQuery, count})
-      .then(result => {
-        return {
-          records: result.records.map(record => mapKeys(record, (value, key) => camelCase(key))),
-          count: result.count,
-        };
-      });
-  }
-
-  if (process.env.KNEX_DEBUG) {
-    log(chalk.magenta.bold(recordQuery.toString()));
-  }
-
-  if (columns) {
-    recordQuery.columns(columns);
-  }
-
-  return recordQuery
-    .map(record => mapKeys(record, (value, key) => camelCase(key)));
-
+  return Promise.props({records: query, count, countEstimate})
+    .then(result => {
+      return {
+        records: result.records.map(record => mapKeys(record, (value, key) => camelCase(key))),
+        count: result.count,
+        countEstimate: result.countEstimate,
+      };
+    });
 }

@@ -40,6 +40,10 @@ export function collection(graphQLObject: GraphQLObjectInstanceType, injectFilte
             type: GraphQLInt,
             description: 'Count of all records that match user-specified filters',
           },
+          countEstimate: {
+            type: GraphQLInt,
+            description: 'Count estimate of all records that match user-specified filters',
+          },
           records: {
             type: new GraphQLList(graphQLObject),
             description: 'A list of records matching the user-specified filters',
@@ -78,7 +82,7 @@ export function record(graphQLObject: GraphQLObjectInstanceType, injectFiltersFr
         filters = injectFiltersFromParent(parent, filters, context, info);
       }
 
-      return graphQLObject._typeConfig.resolve(parent, assign({}, filters, {limit: 1}), context, info)
+      return graphQLObject._typeConfig.resolve(parent, filters, context, info)
         .then(records => get(records, '0'));
     },
   };

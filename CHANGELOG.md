@@ -1,3 +1,9 @@
+## [v0.10.0]
+> December 23, 2016
+
+- Feature: Implement `countEstimate` for GQL collections and cleanup knex adapter code
+
+
 ## [v0.9.1]
 > December 22, 2016
 
