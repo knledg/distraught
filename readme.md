@@ -61,6 +61,10 @@ ALTER SEQUENCE heretic_jobs_id_seq OWNED BY heretic_jobs.id;
 ## GraphQL w/ GraphiQL
 - Implements a GraphQL endpoint to fetch/search your records/collections [Localhost Graphql](http://localhost:8009/graphql)
 
+## Collection Count Estimate
+
+To use a countEstimate for your collections to speed up performance, please view [these instructions](https://wiki.postgresql.org/wiki/Count_estimate) on how to add the `count_estimate` function to your Postgres server
+
 ### Authorization
 
 The resolve function in mutations and queries receive an object as the third param of `context` which currently has a single key of `user` which is the authenticated user.  This can be used to make sure the current user has permission to do whatever action is being taken, either a mutation or just fetching data.
