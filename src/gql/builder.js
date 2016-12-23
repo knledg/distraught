@@ -1,5 +1,5 @@
 /* @flow */
-import {assign, get} from 'lodash';
+import {get} from 'lodash';
 import {
   GraphQLInt,
   GraphQLObjectType,
