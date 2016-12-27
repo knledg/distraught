@@ -133,9 +133,11 @@ The framework is setup to run three processes: web, crons, and workers.
 
 - Utilizes [Knex](http://knexjs.org/) to handle your queries
 
-## Creating Instances of Web Servers
+## Setting Up A HTTPServer
 
 ```javascript
+
+import {HTTPServer} from 'distraught';
 
 // These need to be defined before instantiating a new webserver
 HTTPServer.setPres({
@@ -191,4 +193,57 @@ export default [
 ];
 ```
 
+### Setting Up A WorkerServer
 
+```javascript
+import {WorkerServer} from 'distraught';
+
+const SECONDS = 1000 * 1;
+const MINUTES = SECONDS * 60;
+
+const debug = process.env.WORKER_DEBUG; // toggle debugging
+const REQUIRED_ENV = []; // required environment variables
+
+
+const handlerOne = require('./handlerOne');
+const handlerTwo = require('./handlerTwo');
+const afterKilledHook = require('./afterKilledHook');
+
+const workerServer = new WorkerServer({
+  requiredEnv: REQUIRED_ENV,
+  queues: [
+    {name: 'queueOne', concurrency: 3, handler: handlerOne, isEnabled: isEnabledBool, alertAt: MINUTES * 1, killAt: MINUTES * 5, debug},
+    {name: 'queueTwo', handler: handleTwo, isEnabled: isEnabledBool2, alertAt: MINUTES * 10, killAt: MINUTES * 20, debug, onKilled: afterKilledHook},
+  ],
+});
+workerServer.start();
+```
+
+### Enqueueing jobs
+
+```javascript
+import {WorkerServer} from 'distraught';
+
+const queueName = 'queueName';
+
+// static method
+await WorkerServer.enqueue(queueName, {recordId: record.id}); // once enqueued, the workerServer will dequeue from RabbitMQ
+```
+
+### Pausing A Queue
+
+```javascript 
+import {WorkerServer} from 'distraught';
+
+const SECONDS = 1000 * 1;
+const MINUTES = SECONDS * 60;
+const HOURS = MINUTES * 60;
+
+const queueName = 'queueName';
+
+// static method
+WorkerServer.pauseFor(queueName, HOURS * 1)
+  .then(() => {
+    console.log(`${queueName} paused for ${HOURS * 1} hours`);
+  });
+```
