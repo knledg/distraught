@@ -173,7 +173,7 @@ export const server = new HTTPServer({
 server.start();
 ```
 
-## Using Pres In Routes
+### Using Pres In Routes
 
 ```javascript
 export default [
@@ -193,7 +193,7 @@ export default [
 ];
 ```
 
-### Setting Up A WorkerServer
+## Setting Up A WorkerServer
 
 ```javascript
 import {WorkerServer} from 'distraught';
