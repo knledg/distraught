@@ -25,3 +25,6 @@ export {
   updateOne,
 } from './lib/queries';
 export {log} from './lib/logger';
+export {cache} from './lib/cache';
+
+export {SECOND, MINUTE, HOUR} from './lib/constants';

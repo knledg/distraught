@@ -196,10 +196,7 @@ export default [
 ## Setting Up A WorkerServer
 
 ```javascript
-import {WorkerServer} from 'distraught';
-
-const SECONDS = 1000 * 1;
-const MINUTES = SECONDS * 60;
+import {WorkerServer, MINUTE} from 'distraught';
 
 const debug = process.env.WORKER_DEBUG; // toggle debugging
 const REQUIRED_ENV = []; // required environment variables
@@ -212,8 +209,8 @@ const afterKilledHook = require('./afterKilledHook');
 const workerServer = new WorkerServer({
   requiredEnv: REQUIRED_ENV,
   queues: [
-    {name: 'queueOne', concurrency: 3, handler: handlerOne, isEnabled: isEnabledBool, alertAt: MINUTES * 1, killAt: MINUTES * 5, debug},
-    {name: 'queueTwo', handler: handleTwo, isEnabled: isEnabledBool2, alertAt: MINUTES * 10, killAt: MINUTES * 20, debug, onKilled: afterKilledHook},
+    {name: 'queueOne', concurrency: 3, handler: handlerOne, isEnabled: isEnabledBool, alertAt: MINUTE, killAt: MINUTE * 5, debug},
+    {name: 'queueTwo', handler: handleTwo, isEnabled: isEnabledBool2, alertAt: MINUTE * 10, killAt: MINUTE * 20, debug, onKilled: afterKilledHook},
   ],
 });
 workerServer.start();
@@ -233,17 +230,99 @@ await WorkerServer.enqueue(queueName, {recordId: record.id}); // once enqueued, 
 ### Pausing A Queue
 
 ```javascript 
-import {WorkerServer} from 'distraught';
-
-const SECONDS = 1000 * 1;
-const MINUTES = SECONDS * 60;
-const HOURS = MINUTES * 60;
+import {WorkerServer, HOUR} from 'distraught';
 
 const queueName = 'queueName';
 
 // static method
-WorkerServer.pauseFor(queueName, HOURS * 1)
+WorkerServer.pauseFor(queueName, HOUR)
   .then(() => {
-    console.log(`${queueName} paused for ${HOURS * 1} hours`);
+    console.log(`${queueName} paused for ${HOUR} hours`);
+  });
+```
+
+## Caching
+
+Note that `process.env.APP_NAME` needs to be set in your ENV vars in order to uniquely partition your projects' caches
+
+### Caching Individual Functions
+
+Getting value from cache by key, or setting it via a function
+
+```javascript
+  import {cache, MINUTE} from 'distraught';
+  import Promise from 'bluebird';
+
+  const key = 'all-users';
+  const getValueFn = function() { 
+    return functionThatAsyncronouslyReturnsUsers();
+  }; // Can be a scalar, function returning a scalar, or function returning a Promise
+  const ttl = MINUTE * 3; 
+
+  function getUsers() {
+    return cache.getOrSet(key, getValueFn, ttl)
+      .then((users) => {
+        console.log(users);
+      });
+  }
+```
+
+In the above example: the first time `getUsers()` is called, it won't have a key of `all-users` in the cache
+so it will fetch them with the `getValueFn`. 
+
+The second time its called, `all-users` will be in the cache so it's returned immediately from the cache engine
+
+### Invalidating Keys
+
+The below example will remove `all-users` from the cache
+
+```javascript
+  import {cache} from 'distraught';
+
+  const key = 'all-users';
+  return cache.invalidate(key);
+```
+
+### Hapi Routes
+
+(Note: this just is using browser caching, it won't use your caching engine)
+
+```javascript
+import {MINUTE} from 'distraught';
+
+server.route({     
+  path: '/v1/users',     
+  method: 'GET',     
+  handler(request, reply) {         
+    return functionThatAsyncronouslyReturnsUsers();
+  },     
+  config: {         
+    cache: {             
+      expiresIn: MINUTE * 3,             
+      privacy: 'private', // 'public' or 'private'      
+    },
+  },
+});
+```
+
+### GraphQL Query Caching With pgObject
+
+```javascript
+  import {MINUTE, gql} from 'distraught';
+
+  export const userType = gql.pgObject({
+    name: 'User',
+    description: 'A person who registered on our web server',
+    columns: () => ({
+      id: gql.id(),
+      name: gql.string('Full name of user'),
+    }),
+    filters: {
+      ...
+    },
+    cacheTTL: MINUTE, 
+    resolve(parent, filters, user, knex) {
+      ...
+    },
   });
 ```

@@ -15,13 +15,14 @@ import {
   options, // enum is a reserved word
   outputObject,
   pgMutation,
-  pgObject,
   schema,
   sortDir,
   sortName,
   string,
   updatedAt,
 } from './common-fields';
+
+import {pgObject} from './pg-object';
 
 export const gql = {
   bool,
