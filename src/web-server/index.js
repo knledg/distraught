@@ -13,6 +13,7 @@ import glob from 'glob';
 import {gql} from '../gql';
 
 import {TError} from '../lib/terror';
+import {cache} from '../lib/cache';
 
 import {log} from '../lib/logger';
 import {GenericServer} from '../lib/generic-server';
@@ -129,13 +130,35 @@ export class HTTPServer extends GenericServer {
   constructor(options: OptionsType = {}) {
     super(options);
     this.options = options;
-    this.hapi = new Server();
+    this.hapi = new Server({
+      cache: cache.getCachingEngine(),
+    });
 
     this.setConnection();
-    this.registerDefaultPlugins();
-    this.registerPlugins();
-    this.registerRoutes();
-    this.registerSubscriptions();
+    this.registerDefaultPlugins(); // Default Hapi plugins, need to boot these before setting Auth Strategies
+    this.setAuthStrategies(); // Auth strategies using JWT
+    this.enableSwaggerPlugin(); // Enable Swagger
+    this.enableGraphQLPlugin(); // Enable GraphQL if GQL Schema exists in instantiation config
+    this.registerPlugins(); // Hapi plugins specified in instantiation config
+    this.registerRoutes(); // Hapi routes
+    this.registerSubscriptions(); // Websocket subscriptions if REDIS_URL exists
+  }
+
+  enableSwaggerPlugin() {
+    this.hapi.register({
+      'register': require('hapi-swagger'),
+      'options': {
+        schemes: [process.env.NODE_ENV !== 'development' ? 'https' : 'http'],
+        auth: 'jwt',
+        info: {
+          title: process.env.APP_NAME,
+        },
+        sortEndpoints: 'path',
+        sortTags: 'name',
+        expanded: 'none',
+        pathPrefixSize: 2,
+      },
+    });
   }
 
   enableGraphQLPlugin() {
@@ -144,7 +167,7 @@ export class HTTPServer extends GenericServer {
     }
 
     const schema: {} = this.options.graphql.schema;
-    return {
+    return this.hapi.register([{
       register: require('@jwdotjs/hapi-graphql'),
       options: {
         query: (request: any) => ({
@@ -175,7 +198,11 @@ export class HTTPServer extends GenericServer {
           },
         },
       },
-    };
+    }], function(err) {
+      if (err) {
+        throw err;
+      }
+    });
   }
 
   setConnection() {
@@ -212,41 +239,12 @@ export class HTTPServer extends GenericServer {
       require('nes'),
     ];
 
-    // Add swagger if not on prod
-    if (process.env.NODE_ENV !== 'production') {
-      hapiPlugins.push({
-        'register': require('hapi-swagger'),
-        'options': {
-          schemes: [process.env.NODE_ENV !== 'development' ? 'https' : 'http'],
-          info: {
-            title: process.env.APP_NAME,
-          },
-          sortEndpoints: 'path',
-          sortTags: 'name',
-          expanded: 'none',
-          pathPrefixSize: 2,
-        },
-      });
-    }
-
+    // Plugins before auth implemented
     this.hapi.register(compact(hapiPlugins), function(err) {
       if (err) {
         throw err;
       }
     });
-
-    // setAuthStrategies requires the JWT2 plugin to be registered
-    this.setAuthStrategies();
-
-    // This plugin requires the Auth Strategy to be set already
-    const graphQLPlugin = this.enableGraphQLPlugin();
-    if (graphQLPlugin) {
-      this.hapi.register([this.enableGraphQLPlugin()], function(err) {
-        if (err) {
-          throw err;
-        }
-      });
-    }
   }
 
   /**

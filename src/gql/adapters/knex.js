@@ -4,13 +4,14 @@ import {knex} from '../../lib/knex';
 import Promise from 'bluebird';
 
 import type {Promise as PromiseType} from 'bluebird';
-type CountOptionsType = {withCount: boolean, withCountEstimate: boolean};
+export type CountOptsType = {withCount: boolean, withCountEstimate: boolean};
+export type QueryOptsType =  {query: PromiseType, columns: ?string, transform?: Function};
 
 const defaultCountOptions = {withCount: false, withCountEstimate: false};
 
 const MAX_LIMIT = 1000;
 
-function fetchCount(query: PromiseType, countOptions: CountOptionsType) {
+function fetchCount(query: PromiseType, countOptions: CountOptsType) {
   if (countOptions.withCount) {
     return query
       .first(knex.raw('count(*) AS count')) // overwrite columns with just count
@@ -21,7 +22,7 @@ function fetchCount(query: PromiseType, countOptions: CountOptionsType) {
   return Promise.resolve(null);
 }
 
-function fetchCountEstimate(query: PromiseType, countOptions: CountOptionsType) {
+function fetchCountEstimate(query: PromiseType, countOptions: CountOptsType) {
   if (countOptions.withCountEstimate) {
     const clonedQuery = query.toString();
     return knex.raw('select count_estimate(?) AS "countEstimate"', [clonedQuery])
@@ -37,11 +38,12 @@ function fetchCountEstimate(query: PromiseType, countOptions: CountOptionsType) 
  *              Handles defaults]
  * @return {promise}       record|collection {records: [], count}
  */
-export function knexQuery(filters: any, query: PromiseType, columns: ?string, countOptions: CountOptionsType = defaultCountOptions): Promise<*> {
+export function knexQuery(filters: any, queryOpts: QueryOptsType, countOptions: CountOptsType = defaultCountOptions): Promise<*> {
+  const query = queryOpts.query;
   // Returns just the record
   if (! filters.isCollection) {
-    if (columns) {
-      query.columns(columns);
+    if (queryOpts.columns) {
+      query.columns(queryOpts.columns);
     }
 
     return query
@@ -64,8 +66,8 @@ export function knexQuery(filters: any, query: PromiseType, columns: ?string, co
   }
 
   // Columns
-  if (columns) {
-    query.columns(columns);
+  if (queryOpts.columns) {
+    query.columns(queryOpts.columns);
   }
 
   // Limit / Offset

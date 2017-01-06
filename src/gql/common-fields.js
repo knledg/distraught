@@ -1,5 +1,5 @@
 /* @flow */
-import {replace, assign, isFunction, cloneDeep, includes, keys, forOwn} from 'lodash';
+import {replace, assign, cloneDeep, forOwn} from 'lodash';
 import {
   GraphQLString, GraphQLInt, GraphQLBoolean, GraphQLFloat, GraphQLList,
   GraphQLNonNull, GraphQLID, GraphQLEnumType, GraphQLObjectType,
@@ -8,20 +8,9 @@ import GQLDate from '@jwdotjs/graphql-custom-datetype';
 import graphqlFields from 'graphql-fields';
 
 import {knex} from '../lib/knex';
-import {knexQuery} from './adapters/knex';
 import {assertEnvironment, assertHasPermission} from './helpers';
 
 import type {AuthUserType} from '../../flow/types/auth-user';
-
-type PGObjectType = {
-  name: string, // GQL Object name
-  description?: string, // GQL Object description
-  columns: any, // GQL Object allowed requestable columns
-  filters: any, // GQL Object allowed collection filters
-  allowedRoles?: Array<string>,
-  allowedEnvironments?: Array<string>,
-  resolve: Function, // @todo make more explicit
-};
 
 type PGMutationType = {
   name: string, // GQL Object name
@@ -298,45 +287,6 @@ export function schema(newSchema: SchemaObjectType) {
   });
 }
 
-export function pgObject(newPGObject: PGObjectType) {
-  if (! newPGObject.name) {
-    throw new Error('Invalid pgObject: Name is required');
-  } else if (! newPGObject.columns) {
-    throw new Error(`Invalid pgObject: Columns is required for ${newPGObject.name}`);
-  } else if (! newPGObject.resolve) {
-    throw new Error(`Invalid pgObject: Resolve is a required function for ${newPGObject.name}`);
-  }
-
-  return new GraphQLObjectType({
-    name: newPGObject.name,
-    description: newPGObject.description || `No description for ${newPGObject.name}`,
-    fields: newPGObject.columns,
-    args: collectionArgs(newPGObject.filters || {}),
-    resolve(parent: any, filters: any, {user}:{user: AuthUserType}, info: any) {
-      if (newPGObject.allowedRoles) {
-        assertHasPermission(user, newPGObject.allowedRoles);
-      } else if (newPGObject.allowedEnvironments) {
-        assertEnvironment(newPGObject.allowedEnvironments);
-      }
-
-      const fields = graphqlFields(info);
-      const withCount = !!includes(keys(fields), 'count');
-      const withCountEstimate = !!includes(keys(fields), 'countEstimate');
-
-      let result = newPGObject.resolve(parent, filters, {user, fields}, knex); // {query, columns, transform} or query
-      if (! (result && result.query)) {
-        result = {query: result, columns: null};
-      }
-      return knexQuery(filters, result.query, result.columns, {withCount, withCountEstimate})
-        .then(records => {
-          if (result.transform && isFunction(result.transform)) {
-            return result.transform(records);
-          }
-          return records;
-        });
-    },
-  });
-}
 
 /* Specifics */
 

@@ -4,8 +4,7 @@ import chalk from 'chalk';
 import {log} from './logger';
 
 const REQUIRED_ENV = [
-  'NODE_PATH', 'NODE_ENV', 'DATABASE_URL', 'APP_NAME', 'AMQP_URL',
-  'SENDGRID_API_KEY', 'SENDGRID_DEV_EMAIL', 'CRYPTO_ALGO', 'CRYPTO_KEY',
+  'NODE_PATH', 'NODE_ENV', 'DATABASE_URL', 'APP_NAME', 'CRYPTO_ALGO', 'CRYPTO_KEY',
 ];
 
 export class GenericServer {

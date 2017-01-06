@@ -1,8 +1,19 @@
+## [v0.11.0]
+> January 6, 2016
+
+- Breaking Change: Swagger can be ran on Prod, requires user to be authenticated, however
+- Feature: Upgrade Flow to 0.37.4
+- Feature: Created constants `SECOND`, `MINUTE`, `HOUR` (in milleseconds) that can be imported
+- Feature: Created `cache` lib which is used by the WebServer, standalone, and with `pgObject`
+
+- Cleaned up WebServer code to be less tangled
+- Moved PGObject to its own file from `common-fields`
+
+
 ## [v0.10.0]
 > December 23, 2016
 
 - Feature: Implement `countEstimate` for GQL collections and cleanup knex adapter code
-
 
 ## [v0.9.1]
 > December 22, 2016
