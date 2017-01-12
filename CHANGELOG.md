@@ -1,3 +1,8 @@
+## [v0.11.1]
+> January 12, 2016
+
+- Bugfix: Previously catbox-redis was properly received all options (including host/port)
+
 ## [v0.11.0]
 > January 6, 2016
 

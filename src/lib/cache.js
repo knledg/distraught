@@ -14,7 +14,7 @@ class Cache {
 
   constructor() {
     const config = this.getCachingEngine();
-    this.client = new Client(config.engine, {partition: `${config.partition}-${_.snakeCase(process.env.APP_NAME)}`});
+    this.client = new Client(config.engine, config);
     this.start();
   }
 
@@ -148,6 +148,7 @@ class Cache {
    * Determine whether we should use memory or Redis for the caching engine
    */
   getCachingEngine(): {engine: any, host?: string, port?: string, password?: ?string, partition: string} {
+    const partition = `distraught-${_.snakeCase(process.env.APP_NAME)}`;
     if (process.env.REDIS_URL) {
       const redisConfig = require('url').parse(process.env.REDIS_URL);
       return {
@@ -155,13 +156,13 @@ class Cache {
         host: redisConfig.hostname,
         port: redisConfig.port,
         password: redisConfig.auth ? redisConfig.auth.split(':').pop() : void 0,
-        partition: 'distraught',
+        partition,
       };
     }
 
     return {
       engine: require('catbox-memory'),
-      partition: 'distraught',
+      partition,
     };
   }
 }
