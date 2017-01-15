@@ -60,6 +60,25 @@ type OptionsType = {
   routes?: Array<RouteType>,
   setAuthStrategies?: Function,
   subscriptions?: Array<string>,
+  swagger?: {
+    authStrategy: string,
+    sortEndpoints?: string,
+    sortTags?: string,
+    expanded?: string,
+    pathPrefixSize?: number,
+  },
+  views?: {
+    engines: {
+      html: Function,
+    },
+    isCached?: boolean,
+    relativeTo?: string,
+    path?: string,
+    layout?: string,
+    layoutPath?: string,
+    helpersPath?: string,
+    partialsPath?: string,
+  }
 };
 
 
@@ -136,29 +155,38 @@ export class HTTPServer extends GenericServer {
 
     this.setConnection();
     this.registerDefaultPlugins(); // Default Hapi plugins, need to boot these before setting Auth Strategies
+    this.setViewEngine();
     this.setAuthStrategies(); // Auth strategies using JWT
-    this.enableSwaggerPlugin(); // Enable Swagger
     this.enableGraphQLPlugin(); // Enable GraphQL if GQL Schema exists in instantiation config
     this.registerPlugins(); // Hapi plugins specified in instantiation config
+    this.enableSwaggerPlugin(); // Enable Swagger, moved to after registerPlugins() in case more complicated auth strategies are enabled via registerPlugins()
     this.registerRoutes(); // Hapi routes
     this.registerSubscriptions(); // Websocket subscriptions if REDIS_URL exists
   }
 
+  setViewEngine() {
+    if (this.hapi.views) {
+      this.hapi.views(this.options.views);
+    }
+  }
+
   enableSwaggerPlugin() {
-    this.hapi.register({
-      'register': require('hapi-swagger'),
-      'options': {
-        schemes: [process.env.NODE_ENV !== 'development' ? 'https' : 'http'],
-        auth: 'jwt',
-        info: {
-          title: process.env.APP_NAME,
+    if (this.options.swagger) {
+      this.hapi.register({
+        'register': require('hapi-swagger'),
+        'options': {
+          schemes: [process.env.NODE_ENV !== 'development' ? 'https' : 'http'],
+          auth: this.options.swagger.authStrategy || 'jwt',
+          info: {
+            title: process.env.APP_NAME,
+          },
+          sortEndpoints: this.options.swagger.sortPoints || 'path',
+          sortTags: this.options.swagger.sortTags || 'name',
+          expanded: this.options.swagger.expanded || 'none',
+          pathPrefixSize: this.options.swagger.pathPrefixSize || 2,
         },
-        sortEndpoints: 'path',
-        sortTags: 'name',
-        expanded: 'none',
-        pathPrefixSize: 2,
-      },
-    });
+      });
+    }
   }
 
   enableGraphQLPlugin() {

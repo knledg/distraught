@@ -1,3 +1,13 @@
+## [v0.12.0]
+> January 15, 2016
+
+- Breaking Change: To enable swagger please pass `swagger: {}` to your WebServer options, otherwise it will be off by default
+
+- Feature: Swagger can now be disabled
+- Feature: Swagger options are configurable but fallback to Distraught's previous defaults if none specified
+- Feature: Developers can now enable Hapi's server-side rendering via the `this.options.views` params 
+
+
 ## [v0.11.1]
 > January 12, 2016
 
