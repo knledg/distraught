@@ -165,7 +165,7 @@ export class HTTPServer extends GenericServer {
   }
 
   setViewEngine() {
-    if (this.hapi.views) {
+    if (this.options.views) {
       this.hapi.views(this.options.views);
     }
   }

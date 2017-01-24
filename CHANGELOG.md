@@ -1,3 +1,9 @@
+## [v0.12.1]
+> January 24, 2016
+
+- Feature: Use correct logic check for determining if server-side templating view system should be enabled on Hapi
+
+
 ## [v0.12.0]
 > January 15, 2016
 
