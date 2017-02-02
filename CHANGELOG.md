@@ -1,3 +1,9 @@
+## [v0.12.2]
+> February 2nd, 2016
+
+- Bugfix: GraphQL Query Caching Was Not Hashing Filters (it was erroneously hashing fields), causing different queries on the same GQL object to return the same cached value. 
+
+
 ## [v0.12.1]
 > January 24, 2016
 

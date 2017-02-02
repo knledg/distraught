@@ -71,7 +71,7 @@ export function pgObject(newPGObject: PGObjectType) {
 
       if (newPGObject.cacheTTL) {
         const hash = crypto.createHash('md5').update(JSON.stringify({
-          fields,
+          filters,
           columns: knexOpts.columns,
           countOpts,
         })).digest('hex'); // takes no more than a few MS
