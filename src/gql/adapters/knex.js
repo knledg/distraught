@@ -5,7 +5,7 @@ import Promise from 'bluebird';
 
 import type {Promise as PromiseType} from 'bluebird';
 export type CountOptsType = {withCount: boolean, withCountEstimate: boolean};
-export type QueryOptsType =  {query: PromiseType, columns: ?string, transform?: Function};
+export type QueryOptsType =  {query: PromiseType, columns: ?string|Array<string>, transform?: Function};
 
 const defaultCountOptions = {withCount: false, withCountEstimate: false};
 
