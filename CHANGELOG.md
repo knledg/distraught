@@ -1,3 +1,8 @@
+## [v0.13.0]
+> February 3rd, 2016
+
+- Feature: GQL Errors pass back user object from Hapi's request in the GQL error context, which is passed to Rollbar. 
+
 ## [v0.12.2]
 > February 2nd, 2016
 

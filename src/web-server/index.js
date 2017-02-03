@@ -204,12 +204,12 @@ export class HTTPServer extends GenericServer {
           context: {
             user: request.auth.credentials,
           },
-          formatError: (error: {message: string, locations: Array<string>, stack: string}, context: {query: string, operationName: any, variables: any}) => {
+          formatError: (error: {message: string, locations: Array<string>, stack: string}, context: {query: string, operationName: any, variables: any, user: any}) => {
             rollbar.handleErrorWithPayloadData(error, {custom: context, level: 'error'});
             log(
               chalk.red.bold('==> ', error),
               chalk.blue.bold(context.query || 'No query defined'),
-              chalk.blue.bold(context.variables ? JSON.stringify(context.variables) : 'No variables')
+              chalk.blue.bold(context.variables ? JSON.stringify(context.variables) : 'No variables'),
             );
 
             return process.env.NODE_ENV !== 'development' ? {message: error.message} : {

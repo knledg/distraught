@@ -21,7 +21,7 @@
   "license": "MIT",
   "dependencies": {
     "@jwdotjs/graphql-custom-datetype": "^0.3.1",
-    "@jwdotjs/hapi-graphql": "^1.0.6",
+    "@jwdotjs/hapi-graphql": "^1.1.0",
     "assert-env": "^0.6.0",
     "axios": ">= 0.14.0",
     "bluebird": "^3.3.1",
