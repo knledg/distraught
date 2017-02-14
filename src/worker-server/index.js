@@ -1,6 +1,6 @@
 /* @flow */
 import {each, isFunction, startCase} from 'lodash';
-import {heretic} from '../lib/heretic';
+import Heretic from 'heretic';
 import {GenericServer} from '../lib/generic-server';
 import chalk from 'chalk';
 import {log} from '../lib/logger';
@@ -20,6 +20,8 @@ type QueueType = {
 type OptionsType = {
   requiredEnv?: any,
   queues: Array<QueueType>,
+  amqpURL?: string,
+  dbConnection?: Function,
 };
 
 const pausedQueues = {};
@@ -29,17 +31,29 @@ export class WorkerServer extends GenericServer {
     queues: [],
     requiredEnv: [],
   };
+  heretic: Heretic;
 
-  static enqueue(queueName: string, payload: any) {
-    return heretic.enqueue(queueName, payload);
+  initHeretic() {
+    this.heretic = new Heretic(this.options.amqpURL, this.options.dbConnection, {
+      socketOptions: {
+        clientProperties: {
+          Application: 'Workers',
+        },
+      },
+      writeOutcomes: false,
+    });
   }
 
-  static retry(jobId: number) {
-    return heretic.retry(jobId);
+  enqueue(queueName: string, payload: any) {
+    return this.heretic.enqueue(queueName, payload);
   }
 
-  static pauseFor(queueName: string, timeoutInMS: number) {
-    const queue = heretic.queues[queueName];
+  retry(jobId: number) {
+    return this.heretic.retry(jobId);
+  }
+
+  pauseFor(queueName: string, timeoutInMS: number) {
+    const queue = this.heretic.queues[queueName];
     if (! queue) {
       return Promise.resolve();
     }
@@ -53,7 +67,7 @@ export class WorkerServer extends GenericServer {
         if (timeoutInMS && ! pausedQueues[queueName]) {
           setTimeout(function() {
             log(chalk.bold.blue(queueName), chalk.green.bold('[resuming]'));
-            return WorkerServer.resume(queueName);
+            return this.resume(queueName);
           }, timeoutInMS);
           pausedQueues[queueName] = true;
         }
@@ -64,8 +78,8 @@ export class WorkerServer extends GenericServer {
       });
   }
 
-  static resume(queueName: string) {
-    const queue = heretic.queues[queueName];
+  resume(queueName: string) {
+    const queue = this.heretic.queues[queueName];
     if (! queue) {
       return Promise.resolve();
     }
@@ -87,6 +101,8 @@ export class WorkerServer extends GenericServer {
   constructor(options: OptionsType) {
     super(options);
     this.options = options;
+
+    this.initHeretic();
     this.listenForErrors();
   }
 
@@ -124,14 +140,14 @@ export class WorkerServer extends GenericServer {
     // the 'jobError' event happens when a job message is published in RabbitMQ that
     // can never be handled correctly (malformed JSON, job id doesn't exist in the
     // database, etc.). The message will be dead-lettered for later inspection (by you)
-    heretic.on('jobError', err => {
+    this.heretic.on('jobError', err => {
       rollbar.handleErrorWithPayloadData(new Error(`Job error for ${startCase(err.queue_name)}`), {level: 'error', custom: err});
       log(chalk.red.bold('Error with job!'), err);
     });
 
     // the 'jobFailed' event happens when a job fails, but in a recoverable way. it
     // will be automatically retried up to the maximum number of retries.
-    heretic.on('jobFailed', err => {
+    this.heretic.on('jobFailed', err => {
       rollbar.handleErrorWithPayloadData(new Error(`Job failed for ${startCase(err.queue_name)}`), {level: 'error', custom: err});
       log(chalk.red.bold('Job execution failed!'), err);
     });
@@ -157,7 +173,7 @@ export class WorkerServer extends GenericServer {
 
       if (isEnabled) {
         log(chalk.bold.blue(queue.name), chalk.green.bold('[enabled]'));
-        heretic.process(queue.name, queue.concurrency || 1, (job: Object, message: string, done: Function) => {
+        this.heretic.process(queue.name, queue.concurrency || 1, (job: Object, message: string, done: Function) => {
           if (queue.debug) {
             log(chalk.cyan.bold(`${queue.name} ${job.payload.id}`), chalk.blue.bold('[started]'));
           }
@@ -185,6 +201,6 @@ export class WorkerServer extends GenericServer {
 
   start() {
     this.dequeue();
-    return heretic.start();
+    return this.heretic.start();
   }
 }

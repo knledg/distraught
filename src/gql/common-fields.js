@@ -7,7 +7,6 @@ import {
 import GQLDate from '@jwdotjs/graphql-custom-datetype';
 import graphqlFields from 'graphql-fields';
 
-import {knex} from '../lib/knex';
 import {assertEnvironment, assertHasPermission} from './helpers';
 
 import type {AuthUserType} from '../../flow/types/auth-user';
@@ -16,6 +15,7 @@ type PGMutationType = {
   name: string, // GQL Object name
   description: string, // GQL Object description
   columns: any, // GQL Object allowed requestable columns
+  knex: Function,
   payloadName: string,
   payload: any,
   allowedRoles: ?Array<string>,
@@ -213,7 +213,8 @@ export function pgMutation(newPGMutation: PGMutationType) {
         assertEnvironment(newPGMutation.allowedEnvironments);
       }
       const fields = graphqlFields(info);
-      return newPGMutation.resolve(parent, payload, {user, fields}, knex); // {query, columns, transform} or query
+
+      return newPGMutation.resolve(parent, payload, {user, fields}, newPGMutation.knex); // {query, columns, transform} or query
     },
   };
 }

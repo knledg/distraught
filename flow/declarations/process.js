@@ -3,7 +3,6 @@ declare var process: { // eslint-disable-line
   env: {
     AMQP_URL?: string,
     APP_NAME: string,
-    DATABASE_URL: string,
     REDIS_URL?: string,
     DISABLE_JWT_AUTH: string,
     DYNO: string,

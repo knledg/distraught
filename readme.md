@@ -2,6 +2,10 @@
 
 > I was distraught!!
 
+
+
+@Todo update documentation for db/worker-server/graphql
+
 Distraught is a wrapper around a Node.js Hapi server that exposes an HTTPServer for web requests, a CronServer for functions that need to be called at set intervals, and a WorkerServer to handle long requests.
 
 This does require some migrations to be ran, however this server does -not- run the migrations on startup. If you are using Distraught for the first time, please run the following migration:

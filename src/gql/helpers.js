@@ -66,9 +66,7 @@ export function decrypt(ciphertext: string): string {
   try {
     const key: Buffer = new Buffer(process.env.CRYPTO_KEY, 'hex');
     const decipher = crypto.createDecipher(process.env.CRYPTO_ALGO, key);
-    // $FlowBug crypto$Decipher.update is broken in Flow
     decrypted = decipher.update(ciphertext, 'hex', 'utf8');
-    // $FlowBug crypto$Decipher.final is broken in Flow
     decrypted += decipher.final('utf8');
   } catch (err) {
     decrypted = '';

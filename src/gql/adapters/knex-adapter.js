@@ -1,6 +1,6 @@
   /* @flow */
 import {camelCase, mapKeys, get} from 'lodash';
-import {knex} from '../../lib/knex';
+import knex from 'knex';
 import Promise from 'bluebird';
 
 import type {Promise as PromiseType} from 'bluebird';

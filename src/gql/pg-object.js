@@ -6,9 +6,8 @@ import graphqlFields from 'graphql-fields';
 import crypto from 'crypto';
 
 import {collectionArgs} from './common-fields';
-import {knex} from '../lib/knex';
-import {knexQuery} from './adapters/knex';
-import type {QueryOptsType, CountOptsType} from './adapters/knex';
+import {knexQuery} from './adapters/knex-adapter';
+import type {QueryOptsType, CountOptsType} from './adapters/knex-adapter';
 import {cache} from '../lib/cache';
 import {assertEnvironment, assertHasPermission} from './helpers';
 import type {AuthUserType} from '../../flow/types/auth-user';
@@ -16,6 +15,7 @@ import type {AuthUserType} from '../../flow/types/auth-user';
 
 type PGObjectType = {
   name: string, // GQL Object name
+  knex: Function, // Which db instance to connect to
   description?: string, // GQL Object description
   columns: any, // GQL Object allowed requestable columns
   filters: any, // GQL Object allowed collection filters
@@ -62,7 +62,7 @@ export function pgObject(newPGObject: PGObjectType) {
         withCountEstimate: !!includes(keys(fields), 'countEstimate'),
       };
 
-      let knexOpts = newPGObject.resolve(parent, filters, {user, fields}, knex); // Fn resolved to: {query, columns, transform} or query
+      let knexOpts = newPGObject.resolve(parent, filters, {user, fields}, newPGObject.knex); // Fn resolved to: {query, columns, transform} or query
       if (! (knexOpts && knexOpts.query)) {
         knexOpts = {query: knexOpts, columns: null};
       }

@@ -1,3 +1,10 @@
+## [v0.14.0]
+> February 14th, 2016
+
+- Breaking Change: Support for multiple database connections
+  - Does not create singleton instance of Knex based on Database url, now developers should `import {db, addDBConnection} from 'distraught';`, add connections, then use db.connection1, db.connection2 for running queries
+
+
 ## [v0.13.0]
 > February 3rd, 2016
 
