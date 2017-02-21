@@ -23,9 +23,7 @@ class Logger {
   }
 
   log(): void {
-    const messages = map(arguments, argument => {
-      return chalk.stripColor(argument);
-    });
+    const messages = map(arguments, chalk.stripColor);
 
     if (this.le) {
       this.le.debug(JSON.stringify(messages));

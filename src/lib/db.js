@@ -41,10 +41,10 @@ export function enableSQLLogging(knexInstance: Function): void {
 }
 
 export const db = {};
-export function addDBConnection(connectionName: string, connOpts: ConnectionOptsType): void {
+export function addDBConnection(connectionName: string, connOpts: ConnectionOptsType): Function {
   if (db[connectionName]) {
     log(chalk.yellow.bold(`Tried adding db connection, ${connectionName}, but it was already set`));
-    return;
+    return db[connectionName];
   }
 
   const knexInstance = knex(merge({}, connectionOptionDefaults, connOpts));
@@ -54,4 +54,6 @@ export function addDBConnection(connectionName: string, connOpts: ConnectionOpts
   }
 
   db[connectionName] = knexInstance;
+
+  return knexInstance;
 }

@@ -1,7 +1,7 @@
 /* @flow */
 import {each, isFunction} from 'lodash';
-import {GenericServer} from '../lib/generic-server';
-import {log} from '../lib/logger';
+import {GenericServer} from './lib/generic-server';
+import {log} from './lib/logger';
 import chalk from 'chalk';
 import {CronJob} from 'cron';
 

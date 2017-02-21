@@ -11,44 +11,31 @@ Distraught is a wrapper around a Node.js Hapi server that exposes an HTTPServer 
 This does require some migrations to be ran, however this server does -not- run the migrations on startup. If you are using Distraught for the first time, please run the following migration:
 
 ```sql
---
--- Name: heretic_jobs; Type: TABLE; Schema: public; Owner: db
---
-
 CREATE TABLE heretic_jobs (
-    id integer NOT NULL,
-    queue_name text NOT NULL,
-    status text DEFAULT 'pending'::text,
-    payload jsonb,
-    attempt_logs jsonb[] DEFAULT '{}'::jsonb[],
-    max_attempts integer DEFAULT 1 NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    last_attempted_at timestamp with time zone
+  id SERIAL NOT NULL PRIMARY KEY,
+  queue_name text NOT NULL,
+  status text DEFAULT 'pending',
+  payload jsonb,
+  attempt_logs jsonb[] DEFAULT '{}',
+  max_attempts int NOT NULL DEFAULT 1,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  last_attempted_at timestamptz
 );
 
+CREATE INDEX ON heretic_jobs (queue_name);
+CREATE INDEX ON heretic_jobs (status);
 
-ALTER TABLE heretic_jobs OWNER TO db;
+CREATE FUNCTION heretic_updated_at_timestamp() RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE 'plpgsql';
 
---
--- Name: heretic_jobs_id_seq; Type: SEQUENCE; Schema: public; Owner: db
---
-
-CREATE SEQUENCE heretic_jobs_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE heretic_jobs_id_seq OWNER TO db;
-
---
--- Name: heretic_jobs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: db
---
-
-ALTER SEQUENCE heretic_jobs_id_seq OWNED BY heretic_jobs.id;
+CREATE TRIGGER update_heretic_jobs_updated_at
+  BEFORE UPDATE ON heretic_jobs
+  FOR EACH ROW EXECUTE PROCEDURE heretic_updated_at_timestamp();
 ```
 
 
@@ -233,7 +220,7 @@ await WorkerServer.enqueue(queueName, {recordId: record.id}); // once enqueued, 
 
 ### Pausing A Queue
 
-```javascript 
+```javascript
 import {WorkerServer, HOUR} from 'distraught';
 
 const queueName = 'queueName';
@@ -258,10 +245,10 @@ Getting value from cache by key, or setting it via a function
   import Promise from 'bluebird';
 
   const key = 'all-users';
-  const getValueFn = function() { 
+  const getValueFn = function() {
     return functionThatAsyncronouslyReturnsUsers();
   }; // Can be a scalar, function returning a scalar, or function returning a Promise
-  const ttl = MINUTE * 3; 
+  const ttl = MINUTE * 3;
 
   function getUsers() {
     return cache.getOrSet(key, getValueFn, ttl)
@@ -272,7 +259,7 @@ Getting value from cache by key, or setting it via a function
 ```
 
 In the above example: the first time `getUsers()` is called, it won't have a key of `all-users` in the cache
-so it will fetch them with the `getValueFn`. 
+so it will fetch them with the `getValueFn`.
 
 The second time its called, `all-users` will be in the cache so it's returned immediately from the cache engine
 
@@ -294,16 +281,16 @@ The below example will remove `all-users` from the cache
 ```javascript
 import {MINUTE} from 'distraught';
 
-server.route({     
-  path: '/v1/users',     
-  method: 'GET',     
-  handler(request, reply) {         
+server.route({
+  path: '/v1/users',
+  method: 'GET',
+  handler(request, reply) {
     return functionThatAsyncronouslyReturnsUsers();
-  },     
-  config: {         
-    cache: {             
-      expiresIn: MINUTE * 3,             
-      privacy: 'private', // 'public' or 'private'      
+  },
+  config: {
+    cache: {
+      expiresIn: MINUTE * 3,
+      privacy: 'private', // 'public' or 'private'
     },
   },
 });
@@ -324,7 +311,7 @@ server.route({
     filters: {
       ...
     },
-    cacheTTL: MINUTE, 
+    cacheTTL: MINUTE,
     resolve(parent, filters, user, knex) {
       ...
     },

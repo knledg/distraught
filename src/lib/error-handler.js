@@ -152,9 +152,14 @@ class ErrorHandler {
    * @param  {object} request
    */
   terrorWithRequest(terror: {__TErrorPayload: any}, request: any) {
+    let user;
+    if (request && request.auth && request.auth.credentials) {
+      user = request.auth.credentials;
+    }
+
     return rollbar.handleErrorWithPayloadData(
       terror,
-      {level: 'error', custom: terror.__TErrorPayload},
+      {level: 'error', custom: assign({}, terror.__TErrorPayload, {user})},
       this.rollbarRequest(request)
     );
   }
@@ -200,3 +205,15 @@ ErrorHandler.IGNORED_ERRORS = [ 'ECONNRESET', 'write after end', 'socket hang up
 
 
 export const errorHandler = new ErrorHandler();
+
+type LogToRollbarOptions = {
+  request?: any,
+  error: Error|TError,
+};
+
+export function logToRollbar(options: LogToRollbarOptions) {
+  if (options.request) {
+    return errorHandler.hapiRequest(options.request, options.error);
+  }
+  return errorHandler.error(options.error);
+}
