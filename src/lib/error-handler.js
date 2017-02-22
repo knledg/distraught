@@ -2,7 +2,11 @@
 import {includes, isString, assign, noop} from 'lodash';
 import {GraphQLError} from 'graphql';
 import rollbar from 'rollbar';
+import chalk from 'chalk';
+
 import {TError} from './terror';
+import {log} from './logger';
+
 
 type TagType = {connection: string, client: string};
 
@@ -212,6 +216,11 @@ type LogToRollbarOptions = {
 };
 
 export function logToRollbar(options: LogToRollbarOptions) {
+  log(
+    chalk.red(options.error.stack),
+    chalk.yellow.bold(JSON.stringify(options.error.__TErrorPayload))
+  );
+
   if (options.request) {
     return errorHandler.hapiRequest(options.request, options.error);
   }
