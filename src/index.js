@@ -22,13 +22,18 @@ export {TError} from './lib/terror';
 export {
   fetchOne,
   fetchMany,
-  create,
   createOne,
-  update,
+  createMany,
   updateOne,
+  updateMany,
 } from './lib/queries';
 export {log} from './lib/logger';
 export {logToRollbar} from './lib/error-handler';
 export {cache} from './lib/cache';
+
+export {
+  toSnakeCase,
+  toCamelCase,
+} from './gql';
 
 export {SECOND, MINUTE, HOUR} from './lib/constants';

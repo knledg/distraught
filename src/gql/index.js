@@ -48,3 +48,6 @@ export const gql = {
   string,
   updatedAt,
 };
+
+export const toSnakeCase = helpers.toSnakeCase;
+export const toCamelCase = helpers.toCamelCase;

@@ -4,16 +4,27 @@
 - Breaking Change: Support for multiple database connections
   - Does not create singleton instance of Knex based on Database url, now developers should `import {db, addDBConnection} from 'distraught';`, add connections, then use db.connection1, db.connection2 for running queries
 
+- Breaking Change: Support for multiple Worker Servers by specifying Heretic instance to use
+
+- Breaking Change: create renamed to createMany, update renamed to updateMany for consistency
+
+- Feature: addHeretic fn available
+- Feature: heretic singleton available (once you add a connection you can access it via heretic.<connectionName>)
+
+- Feature: toSnakeCase and toCamelCase exported on root instead of in gql
+- Feature: You can pass in an array of objects to toSnakeCase / toCamelCase now and it will map over each cell and camelCase or snake_case the keys of those objects
+
+- Deprecating: gql.helpers.toSnakeCase / gql.helpers.toCamelCase in favor of just toSnakeCase / toCamelCase
 
 ## [v0.13.0]
 > February 3rd, 2016
 
-- Feature: GQL Errors pass back user object from Hapi's request in the GQL error context, which is passed to Rollbar. 
+- Feature: GQL Errors pass back user object from Hapi's request in the GQL error context, which is passed to Rollbar.
 
 ## [v0.12.2]
 > February 2nd, 2016
 
-- Bugfix: GraphQL Query Caching Was Not Hashing Filters (it was erroneously hashing fields), causing different queries on the same GQL object to return the same cached value. 
+- Bugfix: GraphQL Query Caching Was Not Hashing Filters (it was erroneously hashing fields), causing different queries on the same GQL object to return the same cached value.
 
 
 ## [v0.12.1]
@@ -29,7 +40,7 @@
 
 - Feature: Swagger can now be disabled
 - Feature: Swagger options are configurable but fallback to Distraught's previous defaults if none specified
-- Feature: Developers can now enable Hapi's server-side rendering via the `this.options.views` params 
+- Feature: Developers can now enable Hapi's server-side rendering via the `this.options.views` params
 
 
 ## [v0.11.1]
@@ -67,7 +78,7 @@
 ## [v0.8.2]
 > December 19, 2016
 
-- Bugfix: Debug changes from v0.8.1 were incorrectly passing bindings as-is instead of in an array. This fixes knex debugging. 
+- Bugfix: Debug changes from v0.8.1 were incorrectly passing bindings as-is instead of in an array. This fixes knex debugging.
 
 ## [v0.8.1]
 > December 15, 2016
@@ -97,7 +108,7 @@
 ## [v0.6.3]
 > November 21, 2016
 
-- Feature: If a user doesn't request a count on a collection, it won't run the count query. 
+- Feature: If a user doesn't request a count on a collection, it won't run the count query.
 - Exposes fields in `ctx` in the resolve Fn
 
 ## [v0.6.2]

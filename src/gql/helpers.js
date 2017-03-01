@@ -1,5 +1,5 @@
 /* @flow */
-import {mapKeys, snakeCase, camelCase, some, includes} from 'lodash';
+import {mapKeys, map, snakeCase, camelCase, some, includes} from 'lodash';
 import crypto from 'crypto';
 import Boom from 'boom';
 
@@ -10,7 +10,15 @@ import type AuthUserType from '../../flow/types/auth-user';
  * @param  {object} payload
  * @return {object}
  */
-export function toSnakeCase(payload: any) {
+export function toSnakeCase(payload: Object|Array<Object>) {
+  if (Array.isArray(payload)) {
+    return map(payload, (item) => {
+      return mapKeys(item, (value, key) => {
+        return snakeCase(key);
+      });
+    });
+  }
+
   return mapKeys(payload, (value, key) => {
     return snakeCase(key);
   });
@@ -21,7 +29,15 @@ export function toSnakeCase(payload: any) {
  * @param  {object} payload
  * @return {object}
  */
-export function toCamelCase(payload: any) {
+export function toCamelCase(payload: Object|Array<Object>) {
+  if (Array.isArray(payload)) {
+    return map(payload, (item) => {
+      return mapKeys(item, (value, key) => {
+        return camelCase(key);
+      });
+    });
+  }
+
   return mapKeys(payload, (value, key) => {
     return camelCase(key);
   });

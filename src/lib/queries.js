@@ -24,7 +24,7 @@ export function fetchOne(knex: Function, tableName: string, filters: any) {
  *           automatically snakecases all keys on all records]
  * @return {Array} Array of new records
  */
-export function create(knex: Function, tableName: string, payload: any) {
+export function createMany(knex: Function, tableName: string, payload: any) {
   if (!Array.isArray(payload)) {
     payload = [payload];
   }
@@ -42,7 +42,7 @@ export function create(knex: Function, tableName: string, payload: any) {
  * [createOne - Calls create Fn but returns the first result]
  */
 export function createOne(knex: Function, tableName: string, payload: any) {
-  return create(knex, tableName, payload)
+  return createMany(knex, tableName, payload)
     .then(records => get(records, '0'));
 }
 
@@ -54,7 +54,7 @@ export function createOne(knex: Function, tableName: string, payload: any) {
  * @param  {Object}   payload     only accepts object of keys and values, not an array
  * @return {Array}                returns array of updated records
  */
-export function update(knex: Function, tableName: string, filters: any, payload: any) {
+export function updateMany(knex: Function, tableName: string, filters: any, payload: any) {
   const modifiedFilters = gql.helpers.toSnakeCase(filters);
   const modifiedPayload = gql.helpers.toSnakeCase(payload);
 
@@ -68,6 +68,6 @@ export function update(knex: Function, tableName: string, filters: any, payload:
  * [updateOne - Calls update Fn but returns the first result]
  */
 export function updateOne(knex: Function, tableName: string, filters: any, payload: any) {
-  return update(knex, tableName, filters, payload)
+  return updateMany(knex, tableName, filters, payload)
     .then(records => get(records, '0'));
 }
