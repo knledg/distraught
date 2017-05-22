@@ -9,7 +9,7 @@ const clone = require('lodash').clone;
 export const knex = require('knex')({
   debug: process.env.KNEX_DEFAULT_DEBUG,
   client: 'pg',
-  connection: process.env.DATABASE_URL,
+  connection: process.env.DATABASE_URL + (process.env.NODE_ENV === 'development' ? '' : '?ssl=true'),
   pool: {
     min: 2,
     max: process.env.DB_CONNECTION_POOL_MAX || 10,
