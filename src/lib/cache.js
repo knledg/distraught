@@ -24,7 +24,7 @@ class Cache {
     if (isReady) {
       return Promise.resolve(isReady);
     } else if (attempts > this.maxAttempts) {
-      throw new TError('Unable to reach caching server, max attempts reached');
+      return Promise.reject(new TError('Unable to reach caching server, max attempts reached'));
     }
 
     return Promise.delay(this.delayBetweenAttempts).then(() => this.isReady(attempts++));
@@ -92,13 +92,16 @@ class Cache {
                   return err ? reject(err) : resolve(result);
                 });
               })
-              .catch((error) => {
-                throw new TError(`Unable to set cache for key ${key}, promise rejected`, {
-                  message: error.message,
-                  key,
-                  ttl,
-                });
+              .catch((err) => {
+                reject(err);
               });
+          });
+        })
+        .catch((error) => {
+          throw new TError(`Unable to set cache for key ${key}, promise rejected`, {
+            message: error.message,
+            key,
+            ttl,
           });
         });
   }
