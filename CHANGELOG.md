@@ -1,37 +1,52 @@
-## [v0.13.0]
-> February 3rd, 2016
+## [v0.14.0]
+> June 15th, 2017
 
-- Feature: GQL Errors pass back user object from Hapi's request in the GQL error context, which is passed to Rollbar. 
+- Removed Rollbar in favor of Sentry (Raven is npm module)
+- Removed Hapi in favor of express
+- Removed most transpilation except for transform-flow-strip-types
+- Removed GQL logic
+- Changed ES6 classes to functions that receive options and return a new instance of that entity (workerServer, cronServer, httpServer, cache)
+- Removed CommonJS module loading in favor of require
+- Upgraded all outdated deps to the latest version
+- Removed Sendgrid logic in favor of Nodemailer, which uses adapters to allow the engineer to choose which email service provider to use
+- Add support for Express' Passport authentication.
+- Removed use of Bluebird (.finally, .tap, .spread no longer available for use)
+
+
+## [v0.13.0]
+> February 3rd, 2017
+
+- Feature: GQL Errors pass back user object from Hapi's request in the GQL error context, which is passed to Rollbar.
 
 ## [v0.12.2]
-> February 2nd, 2016
+> February 2nd, 2017
 
-- Bugfix: GraphQL Query Caching Was Not Hashing Filters (it was erroneously hashing fields), causing different queries on the same GQL object to return the same cached value. 
+- Bugfix: GraphQL Query Caching Was Not Hashing Filters (it was erroneously hashing fields), causing different queries on the same GQL object to return the same cached value.
 
 
 ## [v0.12.1]
-> January 24, 2016
+> January 24, 2017
 
 - Feature: Use correct logic check for determining if server-side templating view system should be enabled on Hapi
 
 
 ## [v0.12.0]
-> January 15, 2016
+> January 15, 2017
 
 - Breaking Change: To enable swagger please pass `swagger: {}` to your WebServer options, otherwise it will be off by default
 
 - Feature: Swagger can now be disabled
 - Feature: Swagger options are configurable but fallback to Distraught's previous defaults if none specified
-- Feature: Developers can now enable Hapi's server-side rendering via the `this.options.views` params 
+- Feature: Developers can now enable Hapi's server-side rendering via the `this.options.views` params
 
 
 ## [v0.11.1]
-> January 12, 2016
+> January 12, 2017
 
 - Bugfix: Previously catbox-redis was properly received all options (including host/port)
 
 ## [v0.11.0]
-> January 6, 2016
+> January 6, 2017
 
 - Breaking Change: Swagger can be ran on Prod, requires user to be authenticated, however
 - Feature: Upgrade Flow to 0.37.4
@@ -60,7 +75,7 @@
 ## [v0.8.2]
 > December 19, 2016
 
-- Bugfix: Debug changes from v0.8.1 were incorrectly passing bindings as-is instead of in an array. This fixes knex debugging. 
+- Bugfix: Debug changes from v0.8.1 were incorrectly passing bindings as-is instead of in an array. This fixes knex debugging.
 
 ## [v0.8.1]
 > December 15, 2016
@@ -90,7 +105,7 @@
 ## [v0.6.3]
 > November 21, 2016
 
-- Feature: If a user doesn't request a count on a collection, it won't run the count query. 
+- Feature: If a user doesn't request a count on a collection, it won't run the count query.
 - Exposes fields in `ctx` in the resolve Fn
 
 ## [v0.6.2]
