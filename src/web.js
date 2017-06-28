@@ -4,6 +4,7 @@
  */
 const express = require('express');
 const compression = require('compression');
+const SwaggerExpress = require('swagger-express-mw');
 const session = require('express-session');
 const bodyParser = require('body-parser');
 const logger = require('morgan');
@@ -20,11 +21,18 @@ const Raven = require('raven');
 const RedisStore = require('connect-redis')(session);
 const redis = require('redis');
 
+const swaggerTools = require('swagger-tools');
+const YAML = require('yamljs');
+
 const redisClient = redis.createClient({url: process.env.REDIS_URL});
 
 type OptionsType = {
   publicPath?: string,
   viewsPath?: string,
+  swaggerConfig?: {
+    appRoot: string,
+    yamlPath?: string,
+  }, // for optional swagger integration
   findUserById: (id: number) => Object,
   viewEngine?: string,
 };
@@ -97,10 +105,12 @@ const httpServer = function httpServer(options: OptionsType) {
         req.path !== '/login' &&
         req.path !== '/signup' &&
         !req.path.match(/^\/auth/) &&
-        !req.path.match(/\./)) {
+        !req.path.match(/\./) &&
+        req.session) {
       req.session.returnTo = req.path;
     } else if (req.user &&
-        req.path == '/account') {
+        req.path == '/account' &&
+        req.session) {
       req.session.returnTo = req.path;
     }
     next();
@@ -125,6 +135,22 @@ const httpServer = function httpServer(options: OptionsType) {
     app.use(Raven.errorHandler());
   } else {
     app.use(errorHandler());
+  }
+
+  if (options.swaggerConfig && options.swaggerConfig.appRoot) {
+    // Exposes /swagger (as JSON) and activates all Swagger Routers
+    SwaggerExpress.create(options.swaggerConfig, function(err, swaggerExpress) {
+      if (err) { throw err; }
+      swaggerExpress.register(app);
+    });
+
+    // Serve Swagger Docs At /docs
+    if (options.swaggerConfig.yamlPath) {
+      const swaggerDoc = YAML.load(options.swaggerConfig.yamlPath);
+      swaggerTools.initializeMiddleware(swaggerDoc, function (middleware) {
+        app.use(middleware.swaggerUi());
+      });
+    }
   }
 
   return {

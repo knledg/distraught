@@ -190,6 +190,26 @@ The below example will remove `all-users` from the cache
   cache.default.invalidate('all-users');
 ```
 
+## Swagger
+
+To enable Swagger:
+
+```javascript
+const server = httpServer({
+  swaggerConfig: {
+    appRoot: __dirname,
+    yamlPath: path.join(__dirname, 'api/swagger/swagger.yaml'),
+  },
+});
+```
+
+[Example of Creating API/Config Folders and Using the Swagger Editor](https://github.com/swagger-api/swagger-node)
+[Swagger - Getting Started](https://github.com/swagger-api/swagger-node/blob/master/docs/README.md)
+
+## Debugging
+
+`DEBUG=express:* <node start script>`
+
 ### Thanks
 
 Thanks to [Hackathon Starter](https://github.com/sahat/hackathon-starter) for a lot of inspiration

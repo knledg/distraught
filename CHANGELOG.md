@@ -6,7 +6,7 @@
 - Removed most transpilation except for transform-flow-strip-types
 - Removed GQL logic
 - Changed ES6 classes to functions that receive options and return a new instance of that entity (workerServer, cronServer, httpServer, cache)
-- Removed CommonJS module loading in favor of require
+- Removed ES6 Imports in favor of CommonJS module loading
 - Upgraded all outdated deps to the latest version
 - Removed Sendgrid logic in favor of Nodemailer, which uses adapters to allow the engineer to choose which email service provider to use
 - Add support for Express' Passport authentication.
