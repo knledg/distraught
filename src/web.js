@@ -88,7 +88,7 @@ const httpServer = function httpServer(options: OptionsType) {
   passport.deserializeUser((id, done) => {
     return options.findUserById(id)
       .then((user) => done(null, user))
-      .catch(done);
+      .catch((err) => done(err, false));
   });
 
   app.use(passport.initialize());
