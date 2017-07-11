@@ -3,6 +3,15 @@ const {each, isFunction, startCase} = require('lodash');
 const Heretic = require('heretic');
 const chalk = require('chalk');
 const {log} = require('./lib/logger');
+const Raven = require('raven');
+
+if (process.env.RAVEN_TOKEN) {
+  Raven.config(process.env.RAVEN_TOKEN, {
+    autoBreadcrumbs: true,
+    environment: process.env.NODE_ENV,
+    captureUnhandledRejections: true,
+  }).install();
+}
 
 type QueueType = {
   name: string,
@@ -116,12 +125,19 @@ const workerServer = function workerServer(options: OptionsType) {
       // database, etc.). The message will be dead-lettered for later inspection (by you)
       this.heretic.on('jobError', err => {
         log(chalk.red.bold('Error with job!'), err);
+        Raven.captureException(err);
       });
 
       // the 'jobFailed' event happens when a job fails, but in a recoverable way. it
       // will be automatically retried up to the maximum number of retries.
-      this.heretic.on('jobFailed', err => {
+      this.heretic.on('jobFailed', (savedJob, err) => {
         log(chalk.red.bold('Job execution failed!'), err);
+        Raven.captureException(err, {
+          extra: {
+            payload: savedJob && savedJob.payload,
+            id: savedJob && savedJob.id,
+          },
+        });
       });
     },
 
@@ -150,25 +166,25 @@ const workerServer = function workerServer(options: OptionsType) {
               log(chalk.cyan.bold(`${queue.name} ${job.payload.id}`), chalk.blue.bold('[started]'));
             }
 
-            const executingPromise = queue.handler(job, message, done);
-            const alertAt = this.setAlertAt(queue, executingPromise);
-            const killAt = this.setKillAt(queue, job, done);
-
-            return executingPromise
-              .then((result) => {
-                if (queue.debug && ! (result instanceof Error)) {
-                  log(chalk.cyan.bold(`${queue.name}`), chalk.green.bold('[completed]'));
-                }
-
-                clearTimeout(alertAt);
-                clearTimeout(killAt);
-                return result;
-              })
-              .catch((err) => {
-                clearTimeout(alertAt);
-                clearTimeout(killAt);
-                throw err;
+            Raven.context(() => {
+              Raven.setContext({
+                payload: job.payload,
               });
+              const executingPromise = queue.handler(job, message, done);
+              const alertAt = this.setAlertAt(queue, executingPromise);
+              const killAt = this.setKillAt(queue, job, done);
+
+              return executingPromise
+                .then((result) => {
+                  clearTimeout(alertAt);
+                  clearTimeout(killAt);
+
+                  if (queue.debug) {
+                    log(chalk.cyan.bold(`${queue.name}`), chalk.green.bold('[completed]'));
+                    return result;
+                  }
+                });
+            });
           });
         } else {
           log(chalk.bold.blue(queue.name), chalk.red.bold('[disabled]'));

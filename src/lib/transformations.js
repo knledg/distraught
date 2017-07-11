@@ -7,7 +7,7 @@ module.exports = {
    * @param  {object} payload
    * @return {object}
    */
-  toSnakeCase(payload: Object|Array<Object>) {
+  toSnakeCase(payload: Object|Array<Object>): Object {
     if (Array.isArray(payload)) {
       return _.map(payload, (item) => {
         return _.mapKeys(item, (value, key) => {
@@ -26,7 +26,7 @@ module.exports = {
    * @param  {object} payload
    * @return {object}
    */
-  toCamelCase(payload: Object|Array<Object>) {
+  toCamelCase(payload: Object|Array<Object>): Object {
     if (Array.isArray(payload)) {
       return _.map(payload, (item) => {
         return _.mapKeys(item, (value, key) => {

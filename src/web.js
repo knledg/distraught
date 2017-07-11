@@ -9,7 +9,6 @@ const session = require('express-session');
 const bodyParser = require('body-parser');
 const logger = require('morgan');
 const chalk = require('chalk');
-const errorHandler = require('errorhandler');
 const lusca = require('lusca');
 const flash = require('express-flash');
 const path = require('path');
@@ -20,6 +19,7 @@ const sass = require('node-sass-middleware');
 const Raven = require('raven');
 const RedisStore = require('connect-redis')(session);
 const redis = require('redis');
+const _ = require('lodash');
 
 const swaggerTools = require('swagger-tools');
 const YAML = require('yamljs');
@@ -43,7 +43,11 @@ const httpServer = function httpServer(options: OptionsType) {
   app.set('port', process.env.PORT || 3000);
 
   if (process.env.RAVEN_TOKEN) {
-    Raven.config(process.env.RAVEN_TOKEN).install();
+    Raven.config(process.env.RAVEN_TOKEN, {
+      autoBreadcrumbs: true,
+      environment: process.env.NODE_ENV,
+      captureUnhandledRejections: true,
+    }).install();
     app.use(Raven.requestHandler());
   }
 
@@ -82,18 +86,25 @@ const httpServer = function httpServer(options: OptionsType) {
   }));
 
   passport.serializeUser((user, done) => {
+    if (! (user && user.id)) {
+      throw new Error('User not found');
+    }
     done(null, user.id);
   });
 
   passport.deserializeUser((id, done) => {
     return options.findUserById(id)
-      .then((user) => done(null, user))
+      .then((user) => {
+        if (_.isEmpty(user)) {
+          throw new Error('User not found');
+        }
+        return done(null, user);
+      })
       .catch((err) => done(err, false));
   });
 
   app.use(passport.initialize());
   app.use(passport.session());
-
 
   app.use((req, res, next) => {
     res.locals.user = req.user;
@@ -127,15 +138,6 @@ const httpServer = function httpServer(options: OptionsType) {
   app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), (req, res) => {
     res.redirect(req.session.returnTo || '/');
   });
-
-  /**
-   * Error Handler.
-   */
-  if (process.env.RAVEN_TOKEN) {
-    app.use(Raven.errorHandler());
-  } else {
-    app.use(errorHandler());
-  }
 
   if (options.swaggerConfig && options.swaggerConfig.appRoot) {
     // Exposes /swagger (as JSON) and activates all Swagger Routers

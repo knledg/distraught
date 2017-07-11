@@ -48,7 +48,41 @@ The framework is setup to run three processes: web, crons, and workers.
 ## Logging
 
 - Supports sending all server logs to [Logentries](https://logentries.com/) if a LOGENTRIES_TOKEN is present.
-- Supports sending uncaught/unhandled errors to [Sentry](https://sentry.io) if a SENTRY_TOKEN is present.
+- Supports sending uncaught/unhandled errors to [Sentry](https://sentry.io) if a RAVEN_TOKEN is present.
+
+### Sentry - Generic Messages w/ Optional Tags
+```javascript
+const Raven = require('raven');
+
+Raven.captureMessage('Boom'); // or
+Raven.captureMessage('hello world!', {tags: {
+  locale: 'en-us'
+}});
+```
+
+### Sentry - Setting Context
+
+You can also set user context:
+
+```javascript
+const Raven = require('raven');
+
+function someHandlerFunction(payload: any) {
+  return Raven.context(function () {
+    Raven.setContext({
+      user: {
+        email: 'matt@example.com',
+        id: '123'
+      },
+      payload,
+    });
+
+    return someFunc(); // this may throw an error
+    // errors thrown here will be associated with matt
+  });
+  // errors thrown here will not be associated with matt
+}
+```
 
 ## Database
 

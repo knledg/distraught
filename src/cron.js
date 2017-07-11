@@ -3,6 +3,14 @@ const _ = require('lodash');
 const {log} = require('./lib/logger');
 const chalk = require('chalk');
 const {CronJob} = require('cron');
+const Raven = require('raven');
+
+if (process.env.RAVEN_TOKEN) {
+  Raven.config(process.env.RAVEN_TOKEN, {
+    autoBreadcrumbs: true,
+    environment: process.env.NODE_ENV,
+  }).install();
+}
 
 type CronType = {
   name: string,
@@ -33,7 +41,24 @@ const cronServer = function cronServer(options: OptionsType) {
     if (isEnabled) {
       new CronJob({
         cronTime: cron.cronTime,
-        onTick: cron.onTick,
+        onTick: async function attemptCronOnTick() {
+          try {
+            const maybePromise = cron.onTick();
+            if (maybePromise && maybePromise.then) {
+              await maybePromise;
+            }
+          } catch (err) {
+            log(chalk.red.bold(`${cron.name} failed`), err);
+            Raven.captureException(err, {
+              extra: {
+                name: cron.name,
+                cronTime: cron.cronTime,
+              },
+            });
+          }
+
+          return Promise.resolve();
+        },
         start: cron.start || true,
       });
       log(chalk.bold.blue(cron.name), chalk.green.bold('[enabled]'));

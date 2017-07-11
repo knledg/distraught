@@ -41,7 +41,7 @@ const enableSQLLogging = function enableSQLLogging(knexInstance: Function): void
     if (query.sql && query.bindings && query.bindings.length) {
       const oldSql = clone(query.sql);
       const bindings = clone(query.bindings);
-      const sql = oldSql.replace(/\$\d/gi, (x) => {
+      const sql = oldSql.replace(/\$\d+/gi, (x) => {
         return knexInstance.raw('?', [bindings.shift()]);
       });
 
