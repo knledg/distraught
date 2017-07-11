@@ -28,7 +28,7 @@ declare var process: { // eslint-disable-line
 
     SESSION_SECRET: string,
 
-    RAVEN_TOKEN?: string,
+    SENTRY_DSN?: string,
   },
   cwd: Function,
   on: Function,

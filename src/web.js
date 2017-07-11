@@ -42,8 +42,8 @@ const httpServer = function httpServer(options: OptionsType) {
 
   app.set('port', process.env.PORT || 3000);
 
-  if (process.env.RAVEN_TOKEN) {
-    Raven.config(process.env.RAVEN_TOKEN, {
+  if (process.env.SENTRY_DSN) {
+    Raven.config(process.env.SENTRY_DSN, {
       autoBreadcrumbs: true,
       environment: process.env.NODE_ENV,
       captureUnhandledRejections: true,

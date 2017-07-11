@@ -5,8 +5,8 @@ const chalk = require('chalk');
 const {log} = require('./lib/logger');
 const Raven = require('raven');
 
-if (process.env.RAVEN_TOKEN) {
-  Raven.config(process.env.RAVEN_TOKEN, {
+if (process.env.SENTRY_DSN) {
+  Raven.config(process.env.SENTRY_DSN, {
     autoBreadcrumbs: true,
     environment: process.env.NODE_ENV,
     captureUnhandledRejections: true,

@@ -48,7 +48,7 @@ The framework is setup to run three processes: web, crons, and workers.
 ## Logging
 
 - Supports sending all server logs to [Logentries](https://logentries.com/) if a LOGENTRIES_TOKEN is present.
-- Supports sending uncaught/unhandled errors to [Sentry](https://sentry.io) if a RAVEN_TOKEN is present.
+- Supports sending uncaught/unhandled errors to [Sentry](https://sentry.io) if a SENTRY_DSN is present.
 
 ### Sentry - Generic Messages w/ Optional Tags
 ```javascript
