@@ -24,8 +24,6 @@ const _ = require('lodash');
 const swaggerTools = require('swagger-tools');
 const YAML = require('yamljs');
 
-const redisClient = redis.createClient({url: process.env.REDIS_URL});
-
 type OptionsType = {
   publicPath?: string,
   viewsPath?: string,
@@ -75,14 +73,20 @@ const httpServer = function httpServer(options: OptionsType) {
   app.use(lusca.xframe('SAMEORIGIN'));
   app.use(lusca.xssProtection(true));
 
+  let sessionStore = null;
+  if (process.env.REDIS_URL) {
+    const redisClient = redis.createClient({url: process.env.REDIS_URL});
+    sessionStore = new RedisStore({
+      client: redisClient,
+      url: process.env.REDIS_URL,
+    });
+  }
+
   app.use(session({
     resave: true,
     saveUninitialized: true,
     secret: process.env.SESSION_SECRET,
-    store: new RedisStore({
-      client: redisClient,
-      url: process.env.REDIS_URL,
-    }),
+    store: sessionStore,
   }));
 
   passport.serializeUser((user, done) => {
