@@ -1,5 +1,6 @@
 // @flow
 const _ = require ('lodash');
+const crypto = require('crypto');
 
 module.exports = {
   /**
@@ -38,5 +39,32 @@ module.exports = {
     return _.mapKeys(payload, (value, key) => {
       return _.camelCase(key);
     });
+  },
+  
+  encrypt(plaintext: string): string {
+    if (!(process.env.CRYPTO_KEY && process.env.CRYPTO_ALGO)) {
+      throw new Error('Missing require environment variables to encrypt data');
+    }
+    const key = new Buffer(process.env.CRYPTO_KEY, 'hex');
+    const cipher = crypto.createCipher(process.env.CRYPTO_ALGO, key);
+    let ciphertext = cipher.update(plaintext, 'utf8', 'hex');
+    ciphertext += cipher.final('hex');
+    return ciphertext;
+  },
+  
+  decrypt(ciphertext: string): string {
+    if (!(process.env.CRYPTO_KEY && process.env.CRYPTO_ALGO)) {
+      throw new Error('Missing require environment variables to decrypt data');
+    }
+    let decrypted: string = '';
+    try {
+      const key: Buffer = new Buffer(process.env.CRYPTO_KEY, 'hex');
+      const decipher = crypto.createDecipher(process.env.CRYPTO_ALGO, key);
+      decrypted = decipher.update(ciphertext, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+    } catch (err) {
+      decrypted = '';
+    }
+    return decrypted;
   }
 };

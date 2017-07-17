@@ -16,7 +16,7 @@ const {
   updateOne,
 } = require('./lib/queries');
 const {log} = require('./lib/logger');
-const {toSnakeCase, toCamelCase} = require('./lib/transformations');
+const {toSnakeCase, toCamelCase, encrypt, decrypt} = require('./lib/transformations');
 const {SECOND, MINUTE, HOUR} = require('./lib/constants');
 const {cronServer} = require('./cron');
 const {workerServer} = require('./worker');
@@ -26,6 +26,8 @@ module.exports = {
   workerServer,
   toSnakeCase,
   toCamelCase,
+  encrypt,
+  decrypt,
   httpServer,
   enableSQLLogging,
   addDBConnection,
