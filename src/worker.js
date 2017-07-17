@@ -125,19 +125,23 @@ const workerServer = function workerServer(options: OptionsType) {
       // database, etc.). The message will be dead-lettered for later inspection (by you)
       this.heretic.on('jobError', err => {
         log(chalk.red.bold('Error with job!'), err);
-        Raven.captureException(err);
+        if (process.env.SENTRY_DSN) {
+          Raven.captureException(err);
+        }
       });
 
       // the 'jobFailed' event happens when a job fails, but in a recoverable way. it
       // will be automatically retried up to the maximum number of retries.
       this.heretic.on('jobFailed', (savedJob, err) => {
         log(chalk.red.bold('Job execution failed!'), err);
-        Raven.captureException(err, {
-          extra: {
-            payload: savedJob && savedJob.payload,
-            id: savedJob && savedJob.id,
-          },
-        });
+        if (process.env.SENTRY_DSN) {
+          Raven.captureException(err, {
+            extra: {
+              payload: savedJob && savedJob.payload,
+              id: savedJob && savedJob.id,
+            },
+          });
+        }
       });
     },
 
@@ -166,10 +170,12 @@ const workerServer = function workerServer(options: OptionsType) {
               log(chalk.cyan.bold(`${queue.name} ${job.payload.id}`), chalk.blue.bold('[started]'));
             }
 
-            Raven.context(() => {
-              Raven.setContext({
-                payload: job.payload,
-              });
+            const doIt = () => {
+              if (process.env.SENTRY_DSN) {
+                Raven.setContext({
+                  payload: job.payload,
+                });
+              }
               const executingPromise = queue.handler(job, message, done);
               const alertAt = this.setAlertAt(queue, executingPromise);
               const killAt = this.setKillAt(queue, job, done);
@@ -184,7 +190,15 @@ const workerServer = function workerServer(options: OptionsType) {
                     return result;
                   }
                 });
-            });
+            }
+
+            if (process.env.SENTRY_DSN) {
+              Raven.context(() => {
+                doIt();
+              });
+            } else {
+              doIt();
+            }
           });
         } else {
           log(chalk.bold.blue(queue.name), chalk.red.bold('[disabled]'));
