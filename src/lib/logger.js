@@ -2,13 +2,13 @@
 const _ = require('lodash');
 const chalk = require('chalk');
 const moment = require('moment');
-const logentries = require('le_node');
+const Logger = require('le_node');
 
-function Logger(options: {LOGENTRIES_TOKEN?: string}) {
+function logger(options: {LOGENTRIES_TOKEN?: string}) {
   let le;
 
   if (options.LOGENTRIES_TOKEN) {
-    le = logentries.logger({
+    le = new Logger({
       token: options.LOGENTRIES_TOKEN,
     });
 
@@ -27,6 +27,6 @@ function Logger(options: {LOGENTRIES_TOKEN?: string}) {
 }
 
 module.exports = {
-  Logger: Logger,
-  log: Logger({LOGENTRIES_TOKEN: process.env.LOGENTRIES_TOKEN}),
+  logger: logger,
+  log: logger({LOGENTRIES_TOKEN: process.env.LOGENTRIES_TOKEN}),
 }
