@@ -1,7 +1,7 @@
 // @flow
 const axios = require('axios');
 const chalk = require('chalk');
-const log = require('./logger');
+const log = require('./logger').log;
 
 const url = process.env.SLACK_WEBHOOK_URL;
 
