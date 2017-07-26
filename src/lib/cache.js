@@ -44,7 +44,8 @@ exports.addCache = function(name: string, options: {connection: string}) {
           if (result.isPending) {
             // Promise was result of executing function
             return result
-              .then(resolve);
+              .then(resolve)
+              .catch((err) => reject(err));
           }
 
           // Either the result of a function was another function or a scalar result
@@ -60,9 +61,10 @@ exports.addCache = function(name: string, options: {connection: string}) {
         return this.getValueIfFunc(value)
           .then((res) => {
             return client.set(key, JSON.stringify(res), 'PX', ttl, (err) => {
-              return err ? reject(err) : resolve(res);
+              return err ? Promise.reject(err) : resolve(res);
             });
-          }); // don't catch, let error fall through, it probably wasn't Redis
+          })
+          .catch((err) => reject(err)); // Must reject promises or it will hang and throw an uncaught exception error
       });
     },
 
