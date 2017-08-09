@@ -48,7 +48,7 @@ function getMessage(payload: SlackPayload) {
 
 module.exports = {
   slack: {
-  send(data: SlackPayload): Promise<*> {
+    send(data: SlackPayload): Promise<*> {
       if (!url) {
         if (process.env.NODE_ENV === 'development') {
           log(chalk.magenta.bold('Slack Notification (Not Sent): '), getMessage(data));
@@ -67,4 +67,4 @@ module.exports = {
       });
     },
   },
-}
+};

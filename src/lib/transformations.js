@@ -1,5 +1,5 @@
 // @flow
-const _ = require ('lodash');
+const _ = require('lodash');
 const crypto = require('crypto');
 
 module.exports = {
@@ -40,7 +40,7 @@ module.exports = {
       return _.camelCase(key);
     });
   },
-  
+
   encrypt(plaintext: string): string {
     if (!(process.env.CRYPTO_KEY && process.env.CRYPTO_ALGO)) {
       throw new Error('Missing require environment variables to encrypt data');
@@ -51,7 +51,7 @@ module.exports = {
     ciphertext += cipher.final('hex');
     return ciphertext;
   },
-  
+
   decrypt(ciphertext: string): string {
     if (!(process.env.CRYPTO_KEY && process.env.CRYPTO_ALGO)) {
       throw new Error('Missing require environment variables to decrypt data');
@@ -66,5 +66,5 @@ module.exports = {
       decrypted = '';
     }
     return decrypted;
-  }
+  },
 };

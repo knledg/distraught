@@ -1,5 +1,5 @@
 /* @flow */
-const {each, isFunction, startCase} = require('lodash');
+const {each, isFunction} = require('lodash');
 const Heretic = require('heretic');
 const chalk = require('chalk');
 const {log} = require('./lib/logger');
@@ -187,10 +187,10 @@ const workerServer = function workerServer(options: OptionsType) {
 
                   if (queue.debug) {
                     log(chalk.cyan.bold(`${queue.name}`), chalk.green.bold('[completed]'));
-                    return result;
                   }
+                  return result;
                 });
-            }
+            };
 
             if (process.env.SENTRY_DSN) {
               Raven.context(() => {
@@ -212,7 +212,7 @@ const workerServer = function workerServer(options: OptionsType) {
       return this.heretic.start();
     },
   };
-}
+};
 
 module.exports = {
   workerServer,

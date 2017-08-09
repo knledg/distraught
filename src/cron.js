@@ -68,7 +68,7 @@ const cronServer = function cronServer(options: OptionsType) {
       log(chalk.bold.blue(cron.name), chalk.red.bold('[disabled]'));
     }
   });
-}
+};
 
 module.exports = {
   cronServer,

@@ -7,13 +7,13 @@ const {MINUTE} = require('./constants');
 const redis = require('redis');
 const log = require('./logger').log;
 
-const cache = {}
+const cache = {};
 
 exports.cache = cache;
 exports.addCache = function(name: string, options: {connection: string}) {
   const client = redis.createClient({url: options.connection});
 
-  client.on("error", (err) => log(chalk.red.bold(err)));
+  client.on('error', (err) => log(chalk.red.bold(err)));
 
   cache[name] = {
     invalidate(key: string): Promise<true> {
@@ -77,7 +77,7 @@ exports.addCache = function(name: string, options: {connection: string}) {
           }
           return getResult ? JSON.parse(getResult) : this.set(key, value, ttl);
         }); // don't catch, let error fall through, it probably wasn't Redis
-    }
+    },
   };
-}
+};
 

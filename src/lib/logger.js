@@ -23,10 +23,10 @@ function logger(options: {LOGENTRIES_TOKEN?: string}) {
       le.debug(JSON.stringify(messages));
     }
     console.log.apply(this, _.concat(chalk.bold.white(moment().format('hh:mm A')), args)); // eslint-disable-line
-  }
+  };
 }
 
 module.exports = {
   logger: logger,
   log: logger({LOGENTRIES_TOKEN: process.env.LOGENTRIES_TOKEN}),
-}
+};

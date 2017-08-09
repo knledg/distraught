@@ -1,7 +1,7 @@
 // @flow
 
 const _ = require('lodash');
-const {toSnakeCase, toCamelCase} = require('./transformations');
+const {toSnakeCase} = require('./transformations');
 
 /**
  * [create - create one or many records

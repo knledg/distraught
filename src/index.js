@@ -1,10 +1,10 @@
 // @flow
-
 const chalk = require('chalk');
 const {httpServer} = require('./web');
 const {enableSQLLogging, addDBConnection, db} = require('./lib/db');
 const {addEmailTransport, sendEmail} = require('./lib/email');
 const {slack} = require('./lib/slack');
+const {sg, sgHelper} = require('./lib/sendgrid');
 const {cache, addCache} = require('./lib/cache');
 const {addHeretic, heretic} = require('./lib/heretic');
 const {
@@ -47,8 +47,10 @@ module.exports = {
   addHeretic,
   heretic,
   cache,
+  sg,
+  sgHelper,
 
   SECOND,
   MINUTE,
-  HOUR
+  HOUR,
 };

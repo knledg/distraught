@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "deploy": "rm -rf dist && babel -i node_modules -d dist src",
-    "flow": "node_modules/.bin/flow check",
-    "lint": "node_modules/.bin/eslint --ext js .",
+    "flow": "flow check",
+    "lint": "eslint --ext js .",
     "postinstall": "NODE_PATH=. npm run deploy",
     "preversion": "npm run lint && npm run test && npm run flow"
   },
@@ -53,12 +53,15 @@
     "raven": "^2.0.2",
     "raven-js": "^3.15.0",
     "redis": "^2.6.3",
+    "sendgrid": "^5.2.0",
     "swagger-express-mw": "^0.7.0",
     "swagger-tools": "^0.10.1",
     "yamljs": "^0.3.0"
   },
-  "devDependencies": {},
   "engines": {
-    "node": ">= 7.10.0"
+    "node": ">= 8.1.4"
+  },
+  "devDependencies": {
+    "eslint": "^3.19.0"
   }
 }

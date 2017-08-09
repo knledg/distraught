@@ -49,7 +49,7 @@ const enableSQLLogging = function enableSQLLogging(knexInstance: Function): void
     } else if (query.sql) {
       log(chalk.magenta.bold(query.sql), totalTimeInMS);
     }
-  })
+  });
 };
 
 module.exports = {

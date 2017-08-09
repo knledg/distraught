@@ -11,7 +11,6 @@ const logger = require('morgan');
 const chalk = require('chalk');
 const lusca = require('lusca');
 const flash = require('express-flash');
-const path = require('path');
 const passport = require('passport');
 const expressValidator = require('express-validator');
 const expressStatusMonitor = require('express-status-monitor');
@@ -54,7 +53,7 @@ const httpServer = function httpServer(options: OptionsType) {
   app.set('view engine', options.viewEngine || 'pug');
   app.use(logger('dev'));
   app.use(bodyParser.json());
-  app.use(bodyParser.urlencoded({ extended: true }));
+  app.use(bodyParser.urlencoded({extended: true}));
   app.use(expressValidator());
 
   if (options.viewPath) {
@@ -64,9 +63,9 @@ const httpServer = function httpServer(options: OptionsType) {
   if (options.publicPath) {
     app.use(sass({
       src: options.publicPath,
-      dest: options.publicPath
+      dest: options.publicPath,
     }));
-    app.use(express.static(options.publicPath, { maxAge: 31557600000 }));
+    app.use(express.static(options.publicPath, {maxAge: 31557600000}));
   }
 
   app.use(flash());
@@ -124,7 +123,7 @@ const httpServer = function httpServer(options: OptionsType) {
         req.session) {
       req.session.returnTo = req.path;
     } else if (req.user &&
-        req.path == '/account' &&
+        req.path === '/account' &&
         req.session) {
       req.session.returnTo = req.path;
     }
@@ -134,12 +133,12 @@ const httpServer = function httpServer(options: OptionsType) {
   /**
    * OAuth authentication routes. (Sign in)
    */
-  app.get('/auth/facebook', passport.authenticate('facebook', { scope: ['email', 'public_profile'] }));
-  app.get('/auth/facebook/callback', passport.authenticate('facebook', { failureRedirect: '/login' }), (req, res) => {
+  app.get('/auth/facebook', passport.authenticate('facebook', {scope: ['email', 'public_profile']}));
+  app.get('/auth/facebook/callback', passport.authenticate('facebook', {failureRedirect: '/login'}), (req, res) => {
     res.redirect(req.session.returnTo || '/');
   });
-  app.get('/auth/google', passport.authenticate('google', { scope: 'profile email' }));
-  app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), (req, res) => {
+  app.get('/auth/google', passport.authenticate('google', {scope: 'profile email'}));
+  app.get('/auth/google/callback', passport.authenticate('google', {failureRedirect: '/login'}), (req, res) => {
     res.redirect(req.session.returnTo || '/');
   });
 
@@ -151,9 +150,9 @@ const httpServer = function httpServer(options: OptionsType) {
     });
 
     // Serve Swagger Docs At /docs
-    if (options.swaggerConfig.yamlPath) {
+    if (options.swaggerConfig && options.swaggerConfig.yamlPath) {
       const swaggerDoc = YAML.load(options.swaggerConfig.yamlPath);
-      swaggerTools.initializeMiddleware(swaggerDoc, function (middleware) {
+      swaggerTools.initializeMiddleware(swaggerDoc, function(middleware) {
         app.use(middleware.swaggerUi());
       });
     }
@@ -164,11 +163,12 @@ const httpServer = function httpServer(options: OptionsType) {
     passport,
     start() {
       this.app.listen(app.get('port'), () => {
-        console.log('%s App is running at http://localhost:%d in %s mode', chalk.green('✓'), app.get('port'), app.get('env')); 
+        //eslint-disable
+        console.log('%s App is running at http://localhost:%d in %s mode', chalk.green('✓'), app.get('port'), app.get('env')); //eslint-disable-line no-console
       });
     },
   };
-}
+};
 
 module.exports = {
   httpServer,
