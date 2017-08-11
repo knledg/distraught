@@ -2,7 +2,6 @@
 const chalk = require('chalk');
 const {httpServer} = require('./web');
 const {enableSQLLogging, addDBConnection, db} = require('./lib/db');
-const {addEmailTransport, sendEmail} = require('./lib/email');
 const {slack} = require('./lib/slack');
 const {sg, sgHelper} = require('./lib/sendgrid');
 const {cache, addCache} = require('./lib/cache');
@@ -32,8 +31,6 @@ module.exports = {
   enableSQLLogging,
   addDBConnection,
   db,
-  addEmailTransport,
-  sendEmail,
   fetchMany,
   fetchOne,
   create,
