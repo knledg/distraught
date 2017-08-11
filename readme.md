@@ -2,123 +2,44 @@
 
 > I was distraught!!
 
-Distraught is a wrapper around a Node.js Hapi server that exposes an HTTPServer for web requests, a CronServer for functions that need to be called at set intervals, and a WorkerServer to handle long requests.
+Distraught is a wrapper around a Node.js Express server that exposes an HTTPServer for web requests, a CronServer for functions that need to be called at set intervals, and a WorkerServer to handle long requests.
 
 This does require some migrations to be ran, however this server does -not- run the migrations on startup. If you are using Distraught for the first time, please run the following migration:
 
 ```sql
---
--- Name: heretic_jobs; Type: TABLE; Schema: public; Owner: db
---
-
 CREATE TABLE heretic_jobs (
-    id integer NOT NULL,
-    queue_name text NOT NULL,
-    status text DEFAULT 'pending'::text,
-    payload jsonb,
-    attempt_logs jsonb[] DEFAULT '{}'::jsonb[],
-    max_attempts integer DEFAULT 1 NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    last_attempted_at timestamp with time zone
+  id SERIAL NOT NULL PRIMARY KEY,
+  queue_name text NOT NULL,
+  status text DEFAULT 'pending',
+  payload jsonb,
+  attempt_logs jsonb[] DEFAULT '{}',
+  max_attempts int NOT NULL DEFAULT 1,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  last_attempted_at timestamptz
 );
 
+CREATE INDEX ON heretic_jobs (queue_name);
+CREATE INDEX ON heretic_jobs (status);
 
-ALTER TABLE heretic_jobs OWNER TO db;
+CREATE FUNCTION heretic_updated_at_timestamp() RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE 'plpgsql';
 
---
--- Name: heretic_jobs_id_seq; Type: SEQUENCE; Schema: public; Owner: db
---
-
-CREATE SEQUENCE heretic_jobs_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE heretic_jobs_id_seq OWNER TO db;
-
---
--- Name: heretic_jobs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: db
---
-
-ALTER SEQUENCE heretic_jobs_id_seq OWNED BY heretic_jobs.id;
+CREATE TRIGGER update_heretic_jobs_updated_at
+  BEFORE UPDATE ON heretic_jobs
+  FOR EACH ROW EXECUTE PROCEDURE heretic_updated_at_timestamp();
 ```
-
-
-
-## Todo
-
-- [ ] Webpack Dev-Server
-- [x] Implement workers / crons
-
-## Interface
-- Utilizes a [Swagger](http://swagger.io/) interface to easily test all HTTP endpoints. Swagger self-documents your HTTP endpoints to make it easy for your frontend developers to access data. [Localhost Swagger](http://localhost:8009/)
-- Structured to easily support versioning of endpoints
-
-## GraphQL w/ GraphiQL
-- Implements a GraphQL endpoint to fetch/search your records/collections [Localhost Graphql](http://localhost:8009/graphql)
-
-## Collection Count Estimate
-
-To use a countEstimate for your collections to speed up performance, please view [these instructions](https://wiki.postgresql.org/wiki/Count_estimate) on how to add the `count_estimate` function to your Postgres server
-
-### Authorization
-
-The resolve function in mutations and queries receive an object as the third param of `context` which currently has a single key of `user` which is the authenticated user.  This can be used to make sure the current user has permission to do whatever action is being taken, either a mutation or just fetching data.
-
-For example in a type:
-```javascript
-resolve: (parent, filters, {user}) => gql.knexQuery(parent, filters, (knex) => {
-  gql.helpers.assertHasPermission(user, ['admin']);
-
-  ...
-```
-
-or in a mutation:
-```javascript
-resolve: (parent, payload, {user}) => {
-  gql.helpers.assertHasPermission(user, ['admin', 'call-center']);
-
-  ...
-```
-
-The `assertHasPermission` funciton can be imported from 'server/graphql/mutations/helpers'
-
-### Mutations in GraphiQL
-
-In the query section:
-```javascript
-mutation callThisAnyAliasYouWant($input_whateverWeWant:CreateUserRoleInput){
-  createUserRole(input:$input_whateverWeWant) {
-    userId
-    roleId
-    createdAt
-  }
-}
-```
-
-In the variable section:
-```javascript
-{
-  "input_whateverWeWant": {
-    "userId": 1,
-    "roleId": 5
-  }
-}
-```
-
-## Validation
-- Utilizes [Joi Validation](https://github.com/hapijs/joi/blob/v9.0.0-2/API.md) to easily test that the users' payloads are what you expect them to be.
 
 ## Processes
 
 The framework is setup to run three processes: web, crons, and workers.
 
 - Web
-  - Will boot up the Hapi server and Swagger interface
+  - Will boot up the Express server
 - Crons
   - These are processes that run in the background at set intervals
 - Workers
@@ -127,202 +48,202 @@ The framework is setup to run three processes: web, crons, and workers.
 ## Logging
 
 - Supports sending all server logs to [Logentries](https://logentries.com/) if a LOGENTRIES_TOKEN is present.
-- Supports sending uncaught/unhandled errors to [Rollbar](https://rollbar.com) if a ROLLBAR_TOKEN is present.
+- Supports sending uncaught/unhandled errors to [Sentry](https://sentry.io) if a SENTRY_DSN is present.
+
+### Sentry - Generic Messages w/ Optional Tags
+```javascript
+const Raven = require('raven');
+
+Raven.captureMessage('Boom'); // or
+Raven.captureMessage('hello world!', {tags: {
+  locale: 'en-us'
+}});
+```
+
+### Sentry - Setting Context
+
+You can also set user context:
+
+```javascript
+const Raven = require('raven');
+
+function someHandlerFunction(payload: any) {
+  return Raven.context(function () {
+    Raven.setContext({
+      user: {
+        email: 'matt@example.com',
+        id: '123'
+      },
+      payload,
+    });
+
+    return someFunc(); // this may throw an error
+    // errors thrown here will be associated with matt
+  });
+  // errors thrown here will not be associated with matt
+}
+```
 
 ## Database
 
 - Utilizes [Knex](http://knexjs.org/) to handle your queries
 
-## Setting Up A HTTPServer
+## Views
+
+Currently using React, but you can install multiple template rendering engines if needed with [Consolidate](https://github.com/tj/consolidate.js)
+
+## HTTPServer
 
 ```javascript
+const {httpServer, addCache} = require('distraught');
 
-import {HTTPServer} from 'distraught';
+addCache('est', {connection: process.env.REDIS_URL}); // optional: if you want to use caching
 
-// These need to be defined before instantiating a new webserver
-HTTPServer.setPres({
-  verifyRole(request, reply) {
-    if (! includes(request.auth.credentials.roles, 'superGlobalAdmin') {
-      throw Boom.unauthorized('Not super global admin');
-    }
+const homeController = require('./controllers/home');
 
-    return reply();
-  }
-});
-
-
-export const server = new HTTPServer({
-  routes: HTTPServer.loadRoutesFromPath(path.join(__dirname, 'routes')),
-  requiredEnv: ['3RD_PARTY_TOKEN', 'SOME_API_KEY'],
-  setAuthStrategies: hapi => {
-    hapi.auth.strategy('jwt', 'jwt', {
-      key: new Buffer(process.env.CLIENT_SECRET, 'utf8'),
-      cookieKey: 'sessionToken',
-      validateFunc: (decoded, request, callback) => fetchUserAndRoles(decoded.sub, callback),
-      verifyOptions: {
-        algorithms: [ 'HS256' ],
-        audience: process.env.CLIENT_ID,
-      },
-    });
-  },
-  graphql: {
-    schema,
+const server = httpServer({
+  publicPath: path.join(__dirname, 'public'),
+  viewPath: path.join(__dirname, 'views'),
+  findUserById(id: number) {
+    return cache.default.getOrSet(`user-${id}`, fetchUserById.bind(null, id)); // Needed for passport middleware
   },
 });
+
+server.app.use((req, res, next) => {
+  // ...some middleware/plugin logic
+  next();
+});
+
+/* WEB ROUTES */
+server.app.get('/', homeController.get);
+
+authController.setAuthRoutes(server.app, server.passport);
 
 server.start();
 ```
 
-### Using Pres In Routes
+## WorkerServer
 
 ```javascript
-export default [
-  {
-    path: '/route-name',
-    method: ['GET'],
-    handler(request, reply) {
-      // ...
-    },
-    config: {
-      auth: false,
-      pre: [
-        {method: HTTPServer.getPre('verifyRole')},
-      ],
-    },
-  },
-];
-```
+// Make sure the Heretic database migration has run
 
-## Setting Up A WorkerServer
+const {workerServer, MINUTE, heretic, chalk, log, addHeretic, addDBConnection} = require('distraught');
 
-```javascript
-import {WorkerServer, MINUTE} from 'distraught';
+const dbConnection = addDBConnection('default', {connection: process.env.DATABASE_URL});
+addHeretic('default', {connection: process.env.AMQP_URL, dbConnection});
 
-const debug = process.env.WORKER_DEBUG; // toggle debugging
-const REQUIRED_ENV = []; // required environment variables
+function testDequeue(job, message, done) {
+  log(chalk.yellow.bold('Dequeueing job: Test queue'));
+  return Promise.resolve()
+    .then(done);
+}
 
+function queueJob() {
+  heretic.default.enqueue('test.dequeue', {});
+  setTimeout(() => {
+    queueJob();
+  }, 5000);
+}
 
-const handlerOne = require('./handlerOne');
-const handlerTwo = require('./handlerTwo');
-const afterKilledHook = require('./afterKilledHook');
+function startWorkerServer() {
+  const debug = process.env.WORKER_DEBUG;
+  const workers = workerServer({
+    heretic: heretic.default,
+    requiredEnv: [],
+    queues: [
+      {name: 'test.dequeue', concurrency: 3, handler: testDequeue, isEnabled: process.env.NODE_ENV === 'development', alertAt: MINUTE, killAt: MINUTE * 2, debug},
+    ],
+  });
+  workers.start();
+};
 
-const workerServer = new WorkerServer({
-  requiredEnv: REQUIRED_ENV,
-  queues: [
-    {name: 'queueOne', concurrency: 3, handler: handlerOne, isEnabled: isEnabledBool, alertAt: MINUTE, killAt: MINUTE * 5, debug},
-    {name: 'queueTwo', handler: handleTwo, isEnabled: isEnabledBool2, alertAt: MINUTE * 10, killAt: MINUTE * 20, debug, onKilled: afterKilledHook},
-  ],
-});
-workerServer.start();
+queueJob();
+startWorkerServer();
 ```
 
 ### Enqueueing jobs
 
 ```javascript
-import {WorkerServer} from 'distraught';
+import {heretic} from 'distraught';
 
-const queueName = 'queueName';
-
-// static method
-await WorkerServer.enqueue(queueName, {recordId: record.id}); // once enqueued, the workerServer will dequeue from RabbitMQ
+heretic.default.enqueue('test.dequeue', {});
 ```
 
-### Pausing A Queue
+## Crons
 
-```javascript 
-import {WorkerServer, HOUR} from 'distraught';
+```javascript
+const {cronServer, log, chalk} = require('distraught');
 
-const queueName = 'queueName';
-
-// static method
-WorkerServer.pauseFor(queueName, HOUR)
-  .then(() => {
-    console.log(`${queueName} paused for ${HOUR} hours`);
+exports.startCronServer = () => {
+  cronServer({
+    crons: [
+      {
+        name: 'Ping',
+        cronTime: '* * * * * *', // Every second
+        onTick() {
+          log(chalk.green.bold('Pong'));
+        },
+      },
+    ],
   });
+};
 ```
+
 
 ## Caching
-
-Note that `process.env.APP_NAME` needs to be set in your ENV vars in order to uniquely partition your projects' caches
 
 ### Caching Individual Functions
 
 Getting value from cache by key, or setting it via a function
 
 ```javascript
-  import {cache, MINUTE} from 'distraught';
-  import Promise from 'bluebird';
+  const {addCache, cache, MINUTE} = require('distraught');
 
-  const key = 'all-users';
-  const getValueFn = function() { 
-    return functionThatAsyncronouslyReturnsUsers();
+  addCache('default', {connection: process.env.REDIS_URL});
+
+  const getValueFn = () => {
+    return someFuncReturningData();
   }; // Can be a scalar, function returning a scalar, or function returning a Promise
-  const ttl = MINUTE * 3; 
+  const ttl = MINUTE * 3;
 
   function getUsers() {
-    return cache.getOrSet(key, getValueFn, ttl)
-      .then((users) => {
-        console.log(users);
-      });
+    return cache.default.getOrSet('all-users', getValueFn, ttl)
+      .then((users) => console.log(users));
   }
+
+  getUsers(); // Cache missed
+  getUsers(); // Cache hit
 ```
-
-In the above example: the first time `getUsers()` is called, it won't have a key of `all-users` in the cache
-so it will fetch them with the `getValueFn`. 
-
-The second time its called, `all-users` will be in the cache so it's returned immediately from the cache engine
 
 ### Invalidating Keys
 
 The below example will remove `all-users` from the cache
 
 ```javascript
-  import {cache} from 'distraught';
-
-  const key = 'all-users';
-  return cache.invalidate(key);
+  const {cache} = require('distraught');
+  cache.default.invalidate('all-users');
 ```
 
-### Hapi Routes
+## Swagger
 
-(Note: this just is using browser caching, it won't use your caching engine)
+To enable Swagger:
 
 ```javascript
-import {MINUTE} from 'distraught';
-
-server.route({     
-  path: '/v1/users',     
-  method: 'GET',     
-  handler(request, reply) {         
-    return functionThatAsyncronouslyReturnsUsers();
-  },     
-  config: {         
-    cache: {             
-      expiresIn: MINUTE * 3,             
-      privacy: 'private', // 'public' or 'private'      
-    },
+const server = httpServer({
+  swaggerConfig: {
+    appRoot: __dirname,
+    yamlPath: path.join(__dirname, 'api/swagger/swagger.yaml'),
   },
 });
 ```
 
-### GraphQL Query Caching With pgObject
+[Example of Creating API/Config Folders and Using the Swagger Editor](https://github.com/swagger-api/swagger-node)
+[Swagger - Getting Started](https://github.com/swagger-api/swagger-node/blob/master/docs/README.md)
 
-```javascript
-  import {MINUTE, gql} from 'distraught';
+## Debugging
 
-  export const userType = gql.pgObject({
-    name: 'User',
-    description: 'A person who registered on our web server',
-    columns: () => ({
-      id: gql.id(),
-      name: gql.string('Full name of user'),
-    }),
-    filters: {
-      ...
-    },
-    cacheTTL: MINUTE, 
-    resolve(parent, filters, user, knex) {
-      ...
-    },
-  });
-```
+`DEBUG=express:* <node start script>`
+
+### Thanks
+
+Thanks to [Hackathon Starter](https://github.com/sahat/hackathon-starter) for a lot of inspiration

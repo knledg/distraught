@@ -1,13 +1,25 @@
-/* @flow */
-// $FlowFixMe
-import Heretic from 'heretic';
-import {knex} from './knex';
+// @flow
+const Heretic = require('heretic');
 
-export const heretic = new Heretic(process.env.AMQP_URL, knex, {
-  socketOptions: {
-    clientProperties: {
-      Application: 'Workers',
-    },
+type OptionsType = {
+  connection: string,
+  dbConnection: Function,
+  applicationName?: string,
+};
+
+const heretic = {};
+module.exports = {
+  heretic,
+  addHeretic(namespace: string, options: OptionsType) {
+    const newHeretic = new Heretic(options.connection, options.dbConnection, {
+      socketOptions: {
+        clientProperties: {
+          Application: options.applicationName || 'Workers',
+        },
+      },
+      writeOutcomes: false,
+    });
+
+    heretic[namespace] = newHeretic;
   },
-  writeOutcomes: false,
-});
+};

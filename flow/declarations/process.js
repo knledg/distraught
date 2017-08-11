@@ -5,7 +5,7 @@ declare var process: { // eslint-disable-line
     APP_NAME: string,
     DATABASE_URL: string,
     REDIS_URL?: string,
-    DISABLE_JWT_AUTH: string,
+    DEBUG_CACHE?: string,
     DYNO: string,
     GIT_SHA: string,
     HOST: string,
@@ -13,11 +13,22 @@ declare var process: { // eslint-disable-line
     KNEX_DEFAULT_DEBUG: ?string,
     NODE_ENV: string,
     PORT: string,
-    ROLLBAR_TOKEN: string,
+    LOGENTRIES_TOKEN?: string,
     SENDGRID_API_KEY?: string,
     SLACK_WEBHOOK_URL: string,
+
     CRYPTO_KEY?: string,
     CRYPTO_ALGO?: string,
+
+    FACEBOOK_OAUTH_ID: string,
+    FACEBOOK_OAUTH_SECRET: string,
+
+    GOOGLE_OAUTH_ID: string,
+    GOOGLE_OAUTH_SECRET: string,
+
+    SESSION_SECRET: string,
+
+    SENTRY_DSN?: string,
   },
   cwd: Function,
   on: Function,

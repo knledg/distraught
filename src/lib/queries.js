@@ -1,22 +1,7 @@
 // @flow
-import {map, get} from 'lodash';
 
-import {gql} from '../gql';
-
-
-export function fetchMany(knex: Function, tableName: string, filters: any) {
-  const modifiedFilters = gql.helpers.toSnakeCase(filters);
-  return knex(tableName)
-    .where(modifiedFilters);
-}
-
-export function fetchOne(knex: Function, tableName: string, filters: any) {
-  const modifiedFilters = gql.helpers.toSnakeCase(filters);
-  return knex(tableName)
-    .first('*')
-    .where(modifiedFilters)
-    .limit(1);
-}
+const _ = require('lodash');
+const {toSnakeCase} = require('./transformations');
 
 /**
  * [create - create one or many records
@@ -24,27 +9,19 @@ export function fetchOne(knex: Function, tableName: string, filters: any) {
  *           automatically snakecases all keys on all records]
  * @return {Array} Array of new records
  */
-export function create(knex: Function, tableName: string, payload: any) {
+const create = function create(knex: Function, tableName: string, payload: any) {
   if (!Array.isArray(payload)) {
     payload = [payload];
   }
 
-  const modifiedPayload = map(payload, (newRecord) => {
-    return gql.helpers.toSnakeCase(newRecord);
+  const modifiedPayload = _.map(payload, (newRecord) => {
+    return toSnakeCase(newRecord);
   });
 
   return knex(tableName)
     .insert(modifiedPayload)
     .returning('*');
-}
-
-/**
- * [createOne - Calls create Fn but returns the first result]
- */
-export function createOne(knex: Function, tableName: string, payload: any) {
-  return create(knex, tableName, payload)
-    .then(records => get(records, '0'));
-}
+};
 
 /**
  * [update - Update one or many records as determined by filters]
@@ -54,20 +31,49 @@ export function createOne(knex: Function, tableName: string, payload: any) {
  * @param  {Object}   payload     only accepts object of keys and values, not an array
  * @return {Array}                returns array of updated records
  */
-export function update(knex: Function, tableName: string, filters: any, payload: any) {
-  const modifiedFilters = gql.helpers.toSnakeCase(filters);
-  const modifiedPayload = gql.helpers.toSnakeCase(payload);
+const update = function update(knex: Function, tableName: string, filters: any, payload: any) {
+  const modifiedFilters = toSnakeCase(filters);
+  const modifiedPayload = toSnakeCase(payload);
 
   return knex(tableName)
     .where(modifiedFilters)
     .returning('*')
     .update(modifiedPayload);
-}
+};
 
-/**
- * [updateOne - Calls update Fn but returns the first result]
- */
-export function updateOne(knex: Function, tableName: string, filters: any, payload: any) {
-  return update(knex, tableName, filters, payload)
-    .then(records => get(records, '0'));
-}
+module.exports = {
+
+  fetchMany(knex: Function, tableName: string, filters: any) {
+    const modifiedFilters = toSnakeCase(filters);
+    return knex(tableName)
+      .where(modifiedFilters);
+  },
+
+  fetchOne(knex: Function, tableName: string, filters: any) {
+    const modifiedFilters = toSnakeCase(filters);
+    return knex(tableName)
+      .first('*')
+      .where(modifiedFilters)
+      .limit(1);
+  },
+
+  create,
+
+  /**
+   * [createOne - Calls create Fn but returns the first result]
+   */
+  createOne(knex: Function, tableName: string, payload: any) {
+    return create(knex, tableName, payload)
+      .then(records => _.get(records, '0'));
+  },
+
+  update,
+
+  /**
+   * [updateOne - Calls update Fn but returns the first result]
+   */
+  updateOne(knex: Function, tableName: string, filters: any, payload: any) {
+    return update(knex, tableName, filters, payload)
+      .then(records => _.get(records, '0'));
+  },
+};
