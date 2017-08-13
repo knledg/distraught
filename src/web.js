@@ -13,6 +13,10 @@ const lusca = require('lusca');
 const flash = require('express-flash');
 const passport = require('passport');
 const expressValidator = require('express-validator');
+
+const http = require('http');
+const socketio = require('socket.io');
+
 const expressStatusMonitor = require('express-status-monitor');
 const sass = require('node-sass-middleware');
 const Raven = require('raven');
@@ -36,8 +40,11 @@ type OptionsType = {
 
 const httpServer = function httpServer(options: OptionsType) {
   const app = express();
-
   app.set('port', process.env.PORT || 3000);
+
+  // $FlowBug
+  const webserver = http.Server(app); // eslint-disable-line
+  const io = socketio(webserver);
 
   if (process.env.SENTRY_DSN) {
     Raven.config(process.env.SENTRY_DSN, {
@@ -48,7 +55,9 @@ const httpServer = function httpServer(options: OptionsType) {
     app.use(Raven.requestHandler());
   }
 
-  app.use(expressStatusMonitor());
+  app.use(expressStatusMonitor({
+    websocket: io,
+  }));
   app.use(compression());
   app.set('view engine', options.viewEngine || 'pug');
   app.use(logger('dev'));
@@ -160,9 +169,10 @@ const httpServer = function httpServer(options: OptionsType) {
 
   return {
     app,
+    io,
     passport,
     start() {
-      this.app.listen(app.get('port'), () => {
+      webserver.listen(app.get('port'), () => {
         //eslint-disable
         console.log('%s App is running at http://localhost:%d in %s mode', chalk.green('✓'), app.get('port'), app.get('env')); //eslint-disable-line no-console
       });
