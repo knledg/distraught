@@ -32,7 +32,7 @@
     "express-session": "^1.15.3",
     "express-status-monitor": "^0.1.9",
     "express-validator": "^3.2.0",
-    "flow-bin": "^0.48.0",
+    "flow-bin": "^0.52.0",
     "glob": "^7.0.3",
     "heretic": "^0.3.0",
     "knex": "^0.13.0",

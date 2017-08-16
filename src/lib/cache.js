@@ -16,7 +16,52 @@ exports.addCache = function(name: string, options: {connection: string}) {
   client.on('error', (err) => log(chalk.red.bold(err)));
 
   cache[name] = {
-    invalidate(key: string): Promise<true> {
+
+    scan(pattern: string = '*', cursor: number = 0, arrayOfKeys: Array<string> = []): Promise<Array<string>> {
+      return new Promise((resolve, reject) => {
+        if (process.env.DEBUG_CACHE) {
+          log(chalk.cyan.bold('Scanning keys in cache'));
+        }
+        client.scan(cursor, 'MATCH', pattern, (err, [newCursor, newArrayOfKeys]: {newCursor: string, newArrayOfKeys: Array<string>}) => {
+          if (err) {
+            return reject(err);
+          }
+
+          if (newCursor === '0') {
+            return resolve(arrayOfKeys.concat(newArrayOfKeys));
+          }
+          return this.scan(Number(newCursor), arrayOfKeys.concat(newArrayOfKeys))
+            .then(resolve);
+        });
+      });
+    },
+
+    invalidateMany(pattern: string): Promise<*> {
+      return new Promise((resolve, reject) => {
+        return client.keys(pattern, (err, keys) => {
+          if (process.env.DEBUG_CACHE) {
+            log(chalk.cyan.bold(`Invalidating ${keys.length} keys for pattern: ${pattern}`));
+          }
+          if (err) {
+            return reject(err);
+          }
+
+          if (keys.length) {
+            return this.invalidate(keys)
+              .then(resolve)
+              .catch(reject);
+          }
+
+          return resolve();
+        });
+
+      });
+    },
+
+    /**
+     * [key - pass in a single key string or an array of key strings]
+     */
+    invalidate(key: string|Array<string>): Promise<*> {
       return new Promise((resolve, reject) => {
         client.del(key, (err, res) => {
           return err ? reject(err) : resolve(res);
