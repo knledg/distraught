@@ -30,7 +30,7 @@ exports.addCache = function(name: string, options: {connection: string}) {
           if (newCursor === '0') {
             return resolve(arrayOfKeys.concat(newArrayOfKeys));
           }
-          return this.scan(Number(newCursor), arrayOfKeys.concat(newArrayOfKeys))
+          return this.scan(pattern, Number(newCursor), arrayOfKeys.concat(newArrayOfKeys))
             .then(resolve);
         });
       });
