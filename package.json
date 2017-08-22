@@ -7,7 +7,7 @@
     "build": "rm -rf dist && babel -i node_modules -d dist src",
     "flow": "flow check",
     "lint": "eslint --ext js .",
-    "publish": "NODE_PATH=. npm run build",
+    "prepare": "NODE_PATH=. npm run build",
     "preversion": "npm run lint && npm run test && npm run flow"
   },
   "repository": {
