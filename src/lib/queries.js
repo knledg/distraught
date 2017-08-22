@@ -9,7 +9,7 @@ const {toSnakeCase} = require('./transformations');
  *           automatically snakecases all keys on all records]
  * @return {Array} Array of new records
  */
-const create = function create(knex: Function, tableName: string, payload: any) {
+const create = function create(knex: Function, tableName: string, payload: any, columns: Array<string>|string = '*') {
   if (!Array.isArray(payload)) {
     payload = [payload];
   }
@@ -20,7 +20,7 @@ const create = function create(knex: Function, tableName: string, payload: any) 
 
   return knex(tableName)
     .insert(modifiedPayload)
-    .returning('*');
+    .returning(columns);
 };
 
 /**
@@ -43,16 +43,17 @@ const update = function update(knex: Function, tableName: string, filters: any, 
 
 module.exports = {
 
-  fetchMany(knex: Function, tableName: string, filters: any) {
+  fetchMany(knex: Function, tableName: string, filters: any, columns: Array<string>|string = '*') {
     const modifiedFilters = toSnakeCase(filters);
     return knex(tableName)
+      .columns(columns)
       .where(modifiedFilters);
   },
 
-  fetchOne(knex: Function, tableName: string, filters: any) {
+  fetchOne(knex: Function, tableName: string, filters: any, columns: Array<string>|string = '*') {
     const modifiedFilters = toSnakeCase(filters);
     return knex(tableName)
-      .first('*')
+      .first(columns)
       .where(modifiedFilters)
       .limit(1);
   },
