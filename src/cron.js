@@ -16,6 +16,7 @@ type CronType = {
   name: string,
   cronTime: string,
   onTick: Function,
+  runOnInit: boolean,
   start?: boolean,
   isEnabled?: Function|boolean,
 };
@@ -41,6 +42,7 @@ const cronServer = function cronServer(options: OptionsType) {
     if (isEnabled) {
       new CronJob({
         cronTime: cron.cronTime,
+        runOnInit: cron.runOnInit || false,
         onTick: async function attemptCronOnTick() {
           try {
             const maybePromise = cron.onTick();

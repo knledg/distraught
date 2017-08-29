@@ -30,6 +30,11 @@ const YAML = require('yamljs');
 type OptionsType = {
   publicPath?: string,
   viewsPath?: string,
+  session?: {
+    resave?: boolean,
+    rolling?: boolean,
+    saveUninitialized?: boolean,
+  },
   swaggerConfig?: {
     appRoot: string,
     yamlPath?: string,
@@ -85,14 +90,16 @@ const httpServer = function httpServer(options: OptionsType) {
   if (process.env.REDIS_URL) {
     const redisClient = redis.createClient({url: process.env.REDIS_URL});
     sessionStore = new RedisStore({
+      ttl: process.env.TTL_IN_SECONDS || 86400, // one day
       client: redisClient,
       url: process.env.REDIS_URL,
     });
   }
 
   app.use(session({
-    resave: true,
-    saveUninitialized: true,
+    resave: options.session && options.session.hasOwnProperty('resave') ? options.session.resave : true,
+    rolling: options.session && options.session.hasOwnProperty('rolling') ? options.session.rolling : true,
+    saveUninitialized: options.session && options.session.hasOwnProperty('saveUninitialized') ? options.session.saveUninitialized : true,
     secret: process.env.SESSION_SECRET,
     store: sessionStore,
   }));
