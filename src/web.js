@@ -38,6 +38,7 @@ type OptionsType = {
   swaggerConfig?: {
     appRoot: string,
     yamlPath?: string,
+    swaggerDocOptions?: Object,
   }, // for optional swagger integration
   findUserById: (id: number) => Object,
   viewEngine?: string,
@@ -167,7 +168,8 @@ const httpServer = function httpServer(options: OptionsType) {
 
     // Serve Swagger Docs At /docs
     if (options.swaggerConfig && options.swaggerConfig.yamlPath) {
-      const swaggerDoc = YAML.load(options.swaggerConfig.yamlPath);
+      const yamlConfig = YAML.load(options.swaggerConfig.yamlPath);
+      const swaggerDoc = _.assign({}, yamlConfig, _.get(options, 'swaggerConfig.swaggerDocOptions', {}));
       swaggerTools.initializeMiddleware(swaggerDoc, function(middleware) {
         app.use(middleware.swaggerUi());
       });
