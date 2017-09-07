@@ -1,6 +1,6 @@
 /* @flow */
 const {each, isFunction} = require('lodash');
-const Heretic = require('heretic');
+const Heretic = require('@esvinson/heretic');
 const chalk = require('chalk');
 const {log} = require('./lib/logger');
 const Raven = require('raven');
