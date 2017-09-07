@@ -1,5 +1,5 @@
 // @flow
-const Heretic = require('heretic');
+const Heretic = require('@esvinson/heretic');
 
 type OptionsType = {
   connection: string,
