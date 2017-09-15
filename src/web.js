@@ -4,7 +4,8 @@
  */
 const express = require('express');
 const compression = require('compression');
-const SwaggerExpress = require('swagger-express-mw');
+const swaggerExpress = require('swagger-express-middleware');
+const swaggerUi = require('swagger-ui-express');
 const session = require('express-session');
 const bodyParser = require('body-parser');
 const logger = require('morgan');
@@ -24,7 +25,6 @@ const RedisStore = require('connect-redis')(session);
 const redis = require('redis');
 const _ = require('lodash');
 
-const swaggerTools = require('swagger-tools');
 const YAML = require('yamljs');
 
 type OptionsType = {
@@ -161,18 +161,23 @@ const httpServer = function httpServer(options: OptionsType) {
 
   if (options.swaggerConfig && options.swaggerConfig.appRoot) {
     // Exposes /swagger (as JSON) and activates all Swagger Routers
-    SwaggerExpress.create(options.swaggerConfig, function(err, swaggerExpress) {
+    swaggerExpress(options.swaggerConfig.yamlPath, app, function(err, middleware) {
       if (err) { throw err; }
-      swaggerExpress.register(app);
+      app.use(
+        middleware.metadata(),
+        middleware.CORS(), //eslint-disable-line new-cap
+        // middleware.files(),
+        middleware.parseRequest(),
+        middleware.validateRequest(),
+        // middleware.mock()
+      );
     });
 
     // Serve Swagger Docs At /docs
     if (options.swaggerConfig && options.swaggerConfig.yamlPath) {
       const yamlConfig = YAML.load(options.swaggerConfig.yamlPath);
       const swaggerDoc = _.assign({}, yamlConfig, _.get(options, 'swaggerConfig.swaggerDocOptions', {}));
-      swaggerTools.initializeMiddleware(swaggerDoc, function(middleware) {
-        app.use(middleware.swaggerUi());
-      });
+      app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
     }
   }
 
