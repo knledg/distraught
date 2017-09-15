@@ -54,8 +54,8 @@
     "redis": "^2.6.3",
     "sendgrid": "^5.2.3",
     "socket.io": "^2.0.3",
-    "swagger-express-mw": "^0.7.0",
-    "swagger-tools": "^0.10.1",
+    "swagger-express-middleware": "^1.0.0-alpha.12",
+    "swagger-ui-express": "^2.0.7",
     "yamljs": "^0.3.0"
   },
   "engines": {
