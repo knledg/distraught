@@ -171,6 +171,16 @@ const httpServer = function httpServer(options: OptionsType) {
         middleware.validateRequest(),
         // middleware.mock()
       );
+
+      app.use((error, req, res, next) => {
+        if (req.accepts('json')) {
+          res.status(error.status);
+          res.type('json');
+          res.send({message: error.message});
+        } else {
+          next();
+        }
+      });
     });
 
     // Serve Swagger Docs At /docs
