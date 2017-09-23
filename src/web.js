@@ -97,13 +97,15 @@ const httpServer = function httpServer(options: OptionsType) {
     });
   }
 
-  app.use(session({
-    resave: options.session && options.session.hasOwnProperty('resave') ? options.session.resave : true,
-    rolling: options.session && options.session.hasOwnProperty('rolling') ? options.session.rolling : true,
-    saveUninitialized: options.session && options.session.hasOwnProperty('saveUninitialized') ? options.session.saveUninitialized : true,
+  const sessionOpts = _.assign({}, {
+    resave: true,
+    rolling: true,
+    saveUninitialized: true,
     secret: process.env.SESSION_SECRET,
     store: sessionStore,
-  }));
+  }, options.session);
+
+  app.use(session(sessionOpts));
 
   passport.serializeUser((user, done) => {
     if (! (user && user.id)) {
@@ -145,18 +147,6 @@ const httpServer = function httpServer(options: OptionsType) {
       req.session.returnTo = req.path;
     }
     next();
-  });
-
-  /**
-   * OAuth authentication routes. (Sign in)
-   */
-  app.get('/auth/facebook', passport.authenticate('facebook', {scope: ['email', 'public_profile']}));
-  app.get('/auth/facebook/callback', passport.authenticate('facebook', {failureRedirect: '/login'}), (req, res) => {
-    res.redirect(req.session.returnTo || '/');
-  });
-  app.get('/auth/google', passport.authenticate('google', {scope: 'profile email'}));
-  app.get('/auth/google/callback', passport.authenticate('google', {failureRedirect: '/login'}), (req, res) => {
-    res.redirect(req.session.returnTo || '/');
   });
 
   if (options.swaggerConfig && options.swaggerConfig.appRoot) {
