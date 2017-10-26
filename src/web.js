@@ -35,6 +35,10 @@ type OptionsType = {
     rolling?: boolean,
     saveUninitialized?: boolean,
   },
+  bodyParser?: {
+    jsonOptions?: Object,
+    urlencodedOptions?: Object,
+  },
   swaggerConfig?: {
     appRoot: string,
     yamlPath?: string,
@@ -67,8 +71,9 @@ const httpServer = function httpServer(options: OptionsType) {
   app.use(compression());
   app.set('view engine', options.viewEngine || 'pug');
   app.use(logger('dev'));
-  app.use(bodyParser.json());
-  app.use(bodyParser.urlencoded({extended: true}));
+
+  app.use(bodyParser.json(options.bodyParser && options.bodyParser.jsonOptions ? options.bodyParser.jsonOptions : {}));
+  app.use(bodyParser.urlencoded(options.bodyParser && options.bodyParser.urlencodedOptions ? _.assign({extended: true}, options.bodyParser.urlencodedOptions) : {extended: true}));
   app.use(expressValidator());
 
   if (options.viewPath) {
