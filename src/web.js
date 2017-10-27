@@ -94,7 +94,11 @@ const httpServer = function httpServer(options: OptionsType) {
 
   let sessionStore = null;
   if (process.env.REDIS_URL) {
-    const redisClient = redis.createClient({url: process.env.REDIS_URL});
+    const redisOptions = {url: process.env.REDIS_URL, prefix: ''};
+    if (process.env.REDIS_PREFIX) {
+      redisOptions.prefix = process.env.REDIS_PREFIX;
+    }
+    const redisClient = redis.createClient(redisOptions);
     sessionStore = new RedisStore({
       ttl: process.env.TTL_IN_SECONDS || 86400, // one day
       client: redisClient,

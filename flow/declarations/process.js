@@ -5,6 +5,7 @@ declare var process: { // eslint-disable-line
     APP_NAME: string,
     DATABASE_URL: string,
     REDIS_URL?: string,
+    REDIS_PREFIX?: string,
     DEBUG_CACHE?: string,
     DYNO: string,
     GIT_SHA: string,

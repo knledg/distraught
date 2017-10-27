@@ -10,26 +10,28 @@ const log = require('./logger').log;
 const cache = {};
 
 exports.cache = cache;
-exports.addCache = function(name: string, options: {connection: string, prefix?: string}) {
-  const client = redis.createClient({url: options.connection});
-  let prefix = '';
-  if (options.prefix) {
-    prefix = options.prefix;
+exports.addCache = function(name: string, options: {connection: string}) {
+  let prefix = null;
+  if (process.env.REDIS_PREFIX) {
+    prefix = process.env.REDIS_PREFIX;
     if (prefix.slice(-1) !== '-') {
       prefix += '-';
     }
   }
-
+  const client = redis.createClient({url: options.connection, prefix});
   client.on('error', (err) => log(chalk.red.bold(err)));
 
   cache[name] = {
 
     scan(pattern: string = '*', cursor: number = 0, arrayOfKeys: Array<string> = []): Promise<Array<string>> {
       return new Promise((resolve, reject) => {
-        if (process.env.DEBUG_CACHE) {
-          log(chalk.cyan.bold('Scanning keys in cache'));
+        if (prefix && pattern.indexOf(prefix) !== 0) {
+          pattern = prefix + pattern;
         }
-        client.scan(cursor, 'MATCH', this.addPrefix(pattern), (err, [newCursor, newArrayOfKeys]: {newCursor: string, newArrayOfKeys: Array<string>}) => {
+        if (process.env.DEBUG_CACHE) {
+          log(chalk.cyan.bold(`Scanning keys in cache for ${pattern}`));
+        }
+        client.scan(cursor, 'MATCH', pattern, (err, [newCursor, newArrayOfKeys]: {newCursor: string, newArrayOfKeys: Array<string>}) => {
           if (err) {
             return reject(err);
           }
@@ -37,7 +39,7 @@ exports.addCache = function(name: string, options: {connection: string, prefix?:
           if (newCursor === '0') {
             return resolve(arrayOfKeys.concat(newArrayOfKeys));
           }
-          return this.scan(this.addPrefix(pattern), Number(newCursor), arrayOfKeys.concat(newArrayOfKeys))
+          return this.scan(pattern, Number(newCursor), arrayOfKeys.concat(newArrayOfKeys))
             .then(resolve);
         });
       });
@@ -45,9 +47,12 @@ exports.addCache = function(name: string, options: {connection: string, prefix?:
 
     invalidateMany(pattern: string): Promise<*> {
       return new Promise((resolve, reject) => {
-        return client.keys(this.addPrefix(pattern), (err, keys) => {
+        if (prefix && pattern.indexOf(prefix) !== 0) {
+          pattern = prefix + pattern;
+        }
+        return client.keys(pattern, (err, keys) => {
           if (process.env.DEBUG_CACHE) {
-            log(chalk.cyan.bold(`Invalidating ${keys.length} keys for pattern: ${this.addPrefix(pattern)}`));
+            log(chalk.cyan.bold(`Invalidating ${keys.length} keys for pattern: ${pattern}`));
           }
           if (err) {
             return reject(err);
@@ -70,7 +75,23 @@ exports.addCache = function(name: string, options: {connection: string, prefix?:
      */
     invalidate(key: string|Array<string>): Promise<*> {
       return new Promise((resolve, reject) => {
-        client.del(this.addPrefix(key), (err, res) => {
+        if (!Array.isArray(key)) {
+          key = [key];
+        }
+        const p = prefix;
+        if (p) {
+          key = _.map(key, k => {
+            if (k.indexOf(p) === 0) {
+              return k.slice(p.length);
+            }
+            return k;
+          });
+        }
+
+        if (process.env.DEBUG_CACHE) {
+          log(chalk.cyan.bold('Invalidating', key));
+        }
+        client.del(key, (err, res) => {
           return err ? reject(err) : resolve(res);
         });
       });
@@ -78,7 +99,7 @@ exports.addCache = function(name: string, options: {connection: string, prefix?:
 
     get(key: string): Promise<?any|Error> {
       return new Promise((resolve, reject) => {
-        return client.get(this.addPrefix(key), (err, res) => {
+        return client.get(key, (err, res) => {
           return err ? reject(err) : resolve(res);
         });
       });
@@ -112,7 +133,7 @@ exports.addCache = function(name: string, options: {connection: string, prefix?:
       return new Promise((resolve, reject) => {
         return this.getValueIfFunc(value)
           .then((res) => {
-            return client.set(this.addPrefix(key), JSON.stringify(res), 'PX', ttl, (err) => {
+            return client.set(key, JSON.stringify(res), 'PX', ttl, (err) => {
               return err ? Promise.reject(err) : resolve(res);
             });
           })
@@ -121,36 +142,15 @@ exports.addCache = function(name: string, options: {connection: string, prefix?:
     },
 
     getOrSet(key: string, value: any, ttl?: number): Promise<*> {
-      return this.get(this.addPrefix(key))
+      return this.get(key)
         .then((getResult) => {
           if (process.env.DEBUG_CACHE) {
             const hitOrMiss = getResult ? 'hit' : 'missed';
-            log(chalk.cyan.bold(`Cache ${hitOrMiss}: ${this.addPrefix(key)}`));
+            log(chalk.cyan.bold(`Cache ${hitOrMiss}: ${key}`));
           }
-          return getResult ? JSON.parse(getResult) : this.set(this.addPrefix(key), value, ttl);
+          return getResult ? JSON.parse(getResult) : this.set(key, value, ttl);
         }); // don't catch, let error fall through, it probably wasn't Redis
     },
-
-    addPrefix(key: string|Array<string>): string|Array<string> {
-      if (!prefix) {
-        return key;
-      }
-
-      if (Array.isArray(key)) {
-        return _.map(key, (k) => {
-          if (!key.includes(prefix)) {
-            k = `${prefix}${k}`;
-          }
-          return k;
-        });
-      }
-
-      if (!key.includes(prefix)) {
-        key = `${prefix}${key}`;
-      }
-      return key;
-    },
   };
-
 };
 
