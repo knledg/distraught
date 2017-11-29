@@ -56,7 +56,7 @@ const workerServer = function workerServer(options: OptionsType) {
           log(chalk.bold.blue(queueName), chalk.yellow.bold('[paused]'));
 
           if (timeoutInMS && ! pausedQueues[queueName]) {
-            setTimeout(function() {
+            setTimeout(() => {
               log(chalk.bold.blue(queueName), chalk.green.bold('[resuming]'));
               return this.resume(queueName);
             }, timeoutInMS);
