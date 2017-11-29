@@ -13,7 +13,7 @@ if (process.env.SENTRY_DSN) {
   }).install();
 }
 
-type QueueType = {
+type QueueType = {|
   name: string,
   concurrency?: number,
   isEnabled: Function|boolean,
@@ -22,18 +22,20 @@ type QueueType = {
   killAt?: number,
   onKilled?: Function,
   debug?: boolean,
-};
-type OptionsType = {
+|};
+type OptionsType = {|
   requiredEnv?: any,
   queues: Array<QueueType>,
   heretic: Heretic,
-};
+  ttl?: number,
+|};
 
 const pausedQueues = {};
 
 const workerServer = function workerServer(options: OptionsType) {
   return {
     heretic: options.heretic,
+    ttlReached: false,
 
     enqueue(queueName: string, payload: any) {
       return this.heretic.enqueue(queueName, payload);
@@ -189,6 +191,14 @@ const workerServer = function workerServer(options: OptionsType) {
                     log(chalk.cyan.bold(`${queue.name}`), chalk.green.bold('[completed]'));
                   }
                   return result;
+                })
+                .then(() => {
+                  if (this.ttlReached) {
+                    log(chalk.cyan.bold(`${queue.name}`), 'Triggering exit', chalk.red.bold('[timeout reached]'));
+                    this.heretic.on('jobComplete', () => {
+                      process.exit(0);
+                    });
+                  }
                 });
             };
 
@@ -209,6 +219,12 @@ const workerServer = function workerServer(options: OptionsType) {
     start() {
       this.listenForErrors();
       this.dequeue();
+      if (options.ttl) {
+        log(`Timeout set for ${Math.floor(options.ttl / (60 * 1000))} minutes`);
+        setTimeout(() => {
+          this.ttlReached = true;
+        }, options.ttl);
+      }
       return this.heretic.start();
     },
   };
