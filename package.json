@@ -17,6 +17,7 @@
   "author": "jwdotjs",
   "license": "MIT",
   "dependencies": {
+    "@esvinson/heretic": "^0.4.3",
     "axios": ">= 0.14.0",
     "babel-cli": "^6.24.1",
     "babel-eslint": "^7.2.3",
@@ -34,7 +35,6 @@
     "express-validator": "^3.2.0",
     "flow-bin": "^0.52.0",
     "glob": "^7.0.3",
-    "@esvinson/heretic": "^0.4.0",
     "knex": "^0.13.0",
     "le_node": "^1.7.0",
     "lodash": ">= 4.17.1",
