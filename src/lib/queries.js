@@ -63,8 +63,8 @@ module.exports = {
   /**
    * [createOne - Calls create Fn but returns the first result]
    */
-  createOne(knex: Function, tableName: string, payload: any) {
-    return create(knex, tableName, payload)
+  createOne(knex: Function, tableName: string, payload: any, columns: Array<string>|string = '*') {
+    return create(knex, tableName, payload, columns)
       .then(records => _.get(records, '0'));
   },
 
