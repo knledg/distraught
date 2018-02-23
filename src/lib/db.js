@@ -24,7 +24,7 @@ const connectionOptionDefaults = {
 };
 
 const db = {};
-const enableSQLLogging = function enableSQLLogging(knexInstance: Function): void {
+const enableSQLLogging = function enableSQLLogging(knexInstance: Function, connectionName: string): void {
   const runningQueries = {};
   knexInstance.on('query', (query) => {
     runningQueries[query.__knexQueryUid] = Date.now();
@@ -45,9 +45,9 @@ const enableSQLLogging = function enableSQLLogging(knexInstance: Function): void
         return knexInstance.raw('?', [bindings.shift()]);
       });
 
-      log(chalk.magenta.bold(sql), totalTimeInMS);
+      log(chalk.blue(`[${connectionName}]`), chalk.magenta.bold(sql), totalTimeInMS);
     } else if (query.sql) {
-      log(chalk.magenta.bold(query.sql), totalTimeInMS);
+      log(chalk.blue(`[${connectionName}]`), chalk.magenta.bold(query.sql), totalTimeInMS);
     }
   });
 };
@@ -64,7 +64,7 @@ module.exports = {
     const knexInstance = knex(merge({}, connectionOptionDefaults, connOpts));
 
     if (process.env.KNEX_DEBUG) {
-      enableSQLLogging(knexInstance);
+      enableSQLLogging(knexInstance, connectionName);
     }
 
     db[connectionName] = knexInstance;
