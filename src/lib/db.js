@@ -1,9 +1,10 @@
 // @flow
-const merge = require('lodash').merge;
 const chalk = require('chalk');
-const knex = require('knex');
-const log = require('./logger').log;
 const clone = require('lodash').clone;
+const knex = require('knex');
+const merge = require('lodash').merge;
+
+const log = require('./logger').log;
 
 type ConnectionOptsType = {
   debug: ?any,
@@ -23,18 +24,17 @@ const connectionOptionDefaults = {
   },
 };
 
-const db = {};
-const enableSQLLogging = function enableSQLLogging(knexInstance: Function, connectionName: string): void {
+function enableSQLLogging(knexInstance: Function, connectionName: string): void {
   const runningQueries = {};
   knexInstance.on('query', (query) => {
     runningQueries[query.__knexQueryUid] = Date.now();
   });
 
-  knexInstance.on('query-response', function(response, query, builder) {
-    let totalTimeInMS = chalk.green.bold('unknown execution time');
+  knexInstance.on('query-response', (response, query, builder) => {
+    let totalTimeInMS = chalk.green('unknown execution time');
 
     if (runningQueries[query.__knexQueryUid]) {
-      totalTimeInMS = chalk.green.bold(`${Date.now() - runningQueries[query.__knexQueryUid]}ms`);
+      totalTimeInMS = chalk.green(`${Date.now() - runningQueries[query.__knexQueryUid]}ms`);
       delete runningQueries[query.__knexQueryUid];
     }
 
@@ -45,30 +45,28 @@ const enableSQLLogging = function enableSQLLogging(knexInstance: Function, conne
         return knexInstance.raw('?', [bindings.shift()]);
       });
 
-      log(chalk.blue(`[${connectionName}]`), chalk.magenta.bold(sql), totalTimeInMS);
+      log(chalk.blue(`[${connectionName}]`), chalk.magenta(sql), totalTimeInMS);
     } else if (query.sql) {
-      log(chalk.blue(`[${connectionName}]`), chalk.magenta.bold(query.sql), totalTimeInMS);
+      log(chalk.blue(`[${connectionName}]`), chalk.magenta(query.sql), totalTimeInMS);
     }
   });
-};
+}
 
-module.exports = {
-  enableSQLLogging,
-  db,
-  addDBConnection(connectionName: string, connOpts: ConnectionOptsType): Function {
-    if (db[connectionName]) {
-      log(chalk.yellow.bold(`Tried adding db connection, ${connectionName}, but it was already set`));
-      return db[connectionName];
-    }
+function addDBConnection(name: string, options: ConnectionOptsType, db: Object): Function {
+  if (db[name]) {
+    log(chalk.yellow.bold(`DB connection ${name} already added`));
+    return db[name];
+  }
 
-    const knexInstance = knex(merge({}, connectionOptionDefaults, connOpts));
+  const knexInstance = knex(merge({}, connectionOptionDefaults, options));
 
-    if (process.env.KNEX_DEBUG) {
-      enableSQLLogging(knexInstance, connectionName);
-    }
+  if (process.env.KNEX_DEBUG) {
+    enableSQLLogging(knexInstance, name);
+  }
 
-    db[connectionName] = knexInstance;
+  db[name] = knexInstance;
 
-    return knexInstance;
-  },
-};
+  return knexInstance;
+}
+
+module.exports = {addDBConnection};
