@@ -1,3 +1,88 @@
+
+## [v1.13.0]
+> February 24th, 2018
+
+### New functions
+
+#### Email
+- `getOverriddenEmail(email)` - take the original email address and format into a dev email while still preserving intended recipient. (e.g. jason@knledg.com -> dev-mailing-list+jason+at+knledg+com@knledg.com)
+- `overrideEmail(email)` - if in a guarded environment, return a dev email instead of the original email
+- `sendEmail(payload)` - Send an email through Sendgrid
+
+#### Logs
+
+- `logErr(err, extra)` - log an error to Sentry with extra contextual information to help engineers debug. On local env, logs to STDOUT
+- `assertKeys(variable, ['key1', 'key.2.value'])` - assertion on deeply nested keys on an object for existence otherwise send errors to Sentry
+
+#### API Requests
+
+- `request(payload)` - make an axios request with additional logging such as payload and response time in milleseconds
+
+#### Sockets
+
+- `createSocketConnection()` establishing a socket connection on an Express server
+- `emit()` emits a payload for a particular room
+
+#### Storage
+
+- `getBucket(bucketName)` - fetch a bucket from GCS given the bucket name
+- `uploadFile(payload)` - given a file, a bucket, and a path, upload a file to GCS
+- `deleteFile()` - given a bucket and path, delete file from GCS
+- `streamToBuffer()` - when fetching a file from a stream, load file into memory
+
+#### Templates
+
+- `renderPug(templatePath, pageVars)` - generate html from a pug template
+
+#### Transformations
+
+- `sanitizePhone(phone)` - strip non-numeric characters from a phone number
+- `formatPhone(phone)` - format phone as such: `(111) 222-3333`
+- `formatPrice(price)` - take a numeric price and format as such `$1,000.00`
+- `formatNumber(num)` - take a numeric value and format as such `1,000`
+- `getProtocolAndHostname(url)` - return url with protocol, defaults to `http://` if protocol not specified in original value
+- `getHostname(url)` - return just the hostname for a url
+
+#### VOIP
+
+- `sendText(payload)` - sends a text message through Twilio
+
+#### Web Handler Wrappers
+
+- `w(asyncHandlerFn)` - wrap a Fn that returns a promise of html, if an uncaught error is thrown, render a generic internal server error while logging as much contextual debug info as possible
+- `jw(asyncHandlerFn)` - wrap a Fn that returns a promise of json, if an uncaught error is thrown, render a generic JSON response, but try to read error messsage for usage in displaying common HTTP status error codes
+
+#### Init - Set Initial Config And Fn Executable Before Starting Various Processes
+
+- `init(cfg)` - inits all caching, job queues, database connections, pugOptions, guarded email environments, etc
+
+### Other Changes
+
+- Upgrade flow-bin from `v0.52.0` to `v0.66.0`
+- Add Helmet to Express middlewares by default
+- Upgrade Express from `v4.15.3` to `v4.16.2`
+- Added packages: `pug`, `pretty-error`, `twilio`, `numeral`, `newrelic`
+- Remove unused flowtype definition
+
+### Cfg / Env Vars
+
+- `cfg.pathToServerErrorTemplate` - when `w()` captures an uncaught exception, render this generic template
+- `cfg.ignoredStackTraceLines` - array of strings where if that string is included in a line of a stack trace, that line is ignored during local development
+- `cfg.captureUncaught` - send error to Sentry or STDOUT on local environments when there is an uncaught exception
+- `cfg.captureUnhandled` - send error to Sentry or STDOUT on local environments when there is an unhandled rejection
+- `cfg.email.guardedEnvironments` - an array of environments where the toEmail(s) will be replaced by a devEmail if in that environment
+- `cfg.email.devEmail` - when specified, sends email to that email address instead of the toAddress in guarded environments
+- `cfg.enableNewRelic` - enabled newrelic monitoring (also requires ENV var)
+
+- `GOOGLE_CLOUD_AUTH` - base64 encoded auth file to connect to GCP
+- `GOOGLE_CLOUD_PROJECT` - specify which project to upload or delete files to/from
+- `TWILIO_ACCOUNT_SID` and `TWILIO_AUTH_TOKEN` for sending text messages with Twilio
+- `NEW_RELIC_LICENSE_KEY` enabled newrelic monitoring
+
+### Breaking Changes
+
+- Removed functions `enableSQLLogging`, `addDBConnection`, `addCache`, `addHeretic` in favor of `distraught.init(opts)`
+
 ## [v0.14.0]
 > June 15th, 2017
 

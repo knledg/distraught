@@ -45,9 +45,9 @@ const workerServer = function workerServer(options: OptionsType) {
       return this.heretic.retry(jobId);
     },
 
-    pauseFor(queueName: string, timeoutInMS: number) {
+    pauseFor(queueName: string, timeoutInMS: number): Promise<void> {
       const queue = this.heretic.queues[queueName];
-      if (! queue) {
+      if (!queue) {
         return Promise.resolve();
       }
 
@@ -71,7 +71,7 @@ const workerServer = function workerServer(options: OptionsType) {
         });
     },
 
-    resume(queueName: string) {
+    resume(queueName: string): Promise<void> {
       const queue = this.heretic.queues[queueName];
       if (! queue) {
         return Promise.resolve();

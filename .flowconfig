@@ -14,4 +14,4 @@ suppress_comment=\\(.\\|\n\\)*\\$FlowIgnore
 suppress_comment=\\(.\\|\n\\)*\\$FlowBug
 
 [version]
-^0.52.0
+^0.66.0

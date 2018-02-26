@@ -61,9 +61,7 @@ module.exports = {
         method: 'post',
         url,
         data,
-        headers: {
-          'Content-type': 'application/json',
-        },
+        headers: {'Content-type': 'application/json'},
       });
     },
   },

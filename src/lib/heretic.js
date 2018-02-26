@@ -3,15 +3,14 @@ const Heretic = require('@esvinson/heretic');
 
 type OptionsType = {
   connection: string,
-  dbConnection: Function,
+  db: string,
   applicationName?: string,
 };
 
-const heretic = {};
+
 module.exports = {
-  heretic,
-  addHeretic(namespace: string, options: OptionsType) {
-    const newHeretic = new Heretic(options.connection, options.dbConnection, {
+  addHeretic(name: string, options: OptionsType, heretic: Object, db: Object) {
+    heretic[name] = new Heretic(options.connection, db[options.db], {
       socketOptions: {
         clientProperties: {
           Application: options.applicationName || 'Workers',
@@ -19,7 +18,5 @@ module.exports = {
       },
       writeOutcomes: false,
     });
-
-    heretic[namespace] = newHeretic;
   },
 };

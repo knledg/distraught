@@ -4,6 +4,8 @@
 
 Distraught is a wrapper around a Node.js Express server that exposes an HTTPServer for web requests, a CronServer for functions that need to be called at set intervals, and a WorkerServer to handle long requests.
 
+## Expected Migrations / Tables In Order To Use WorkerServer
+
 This does require some migrations to be ran, however this server does -not- run the migrations on startup. If you are using Distraught for the first time, please run the following migration:
 
 ```sql
@@ -47,50 +49,53 @@ The framework is setup to run three processes: web, crons, and workers.
 
 ## Logging
 
-- Supports sending all server logs to [Logentries](https://logentries.com/) if a LOGENTRIES_TOKEN is present.
-- Supports sending uncaught/unhandled errors to [Sentry](https://sentry.io) if a SENTRY_DSN is present.
+- Supports sending all server logs to [Logentries](https://logentries.com/) if a `LOGENTRIES_TOKEN` is present.
+- Supports sending uncaught/unhandled errors to [Sentry](https://sentry.io) if a `SENTRY_DSN` is present.
 
-### Sentry - Generic Messages w/ Optional Tags
-```javascript
-const Raven = require('raven');
-
-Raven.captureMessage('Boom'); // or
-Raven.captureMessage('hello world!', {tags: {
-  locale: 'en-us'
-}});
-```
-
-### Sentry - Setting Context
-
-You can also set user context:
+### Logging Errors
 
 ```javascript
-const Raven = require('raven');
+const {logErr} = require('distraught');
 
-function someHandlerFunction(payload: any) {
-  return Raven.context(function () {
-    Raven.setContext({
-      user: {
-        email: 'matt@example.com',
-        id: '123'
-      },
-      payload,
-    });
-
-    return someFunc(); // this may throw an error
-    // errors thrown here will be associated with matt
-  });
-  // errors thrown here will not be associated with matt
-}
+logErr(new Error('Whoa..That\'s not good'), {
+  var1: val1,
+  var2: val2,
+});
 ```
 
 ## Database
 
 - Utilizes [Knex](http://knexjs.org/) to handle your queries
 
-## Views
+### Setting Up Your Connections
 
-Currently using React, but you can install multiple template rendering engines if needed with [Consolidate](https://github.com/tj/consolidate.js)
+```javascript
+
+const {addDBConnection} = require('distraught');
+
+const dbConnection = addDBConnection('rw', {connection: process.env.DATABASE_URL});
+
+const dbConnection = addDBConnection('r', {connection: process.env.READ_ONLY_DATABASE_URL});
+```
+
+### Querying The Database
+
+```javascript
+
+const {db,toCamelCase, createOne} = require('distraught');
+
+function fetchUsers() {
+  return db.r('users')
+    .column(['*'])
+    .limit(1000)
+    .then(toCamelCase);
+}
+
+function addUser(user) {
+  return createOne(db.rw, 'users', user)
+    .then(toCamelCase);
+}
+```
 
 ## HTTPServer
 
@@ -122,6 +127,42 @@ authController.setAuthRoutes(server.app, server.passport);
 server.start();
 ```
 
+### Templates
+
+By default, HTTPServer will render pug templates, but you can change the view engine to whatever you want during instantiation. 
+
+#### Adding/Changing View Engines
+
+```javascript
+const {httpServer} = require('distraught');
+
+const server = httpServer({
+  viewEngine: 'jsx',
+});
+
+server.app.engine('jsx', (filePath, options, callback) => { 
+  const html = templateRenderFn(filePath, options);
+  callback(null, html);
+});
+```
+
+### Swagger
+
+To enable Swagger:
+
+```javascript
+const server = httpServer({
+  swaggerConfig: {
+    appRoot: __dirname,
+    yamlPath: path.join(__dirname, 'api/swagger/swagger.yaml'),
+  },
+});
+```
+
+[Example of Creating API/Config Folders and Using the Swagger Editor](https://github.com/swagger-api/swagger-node)
+[Swagger - Getting Started](https://github.com/swagger-api/swagger-node/blob/master/docs/README.md)
+
+
 ## WorkerServer
 
 ```javascript
@@ -133,7 +174,7 @@ const dbConnection = addDBConnection('default', {connection: process.env.DATABAS
 addHeretic('default', {connection: process.env.AMQP_URL, dbConnection});
 
 function testDequeue(job, message, done) {
-  log(chalk.yellow.bold('Dequeueing job: Test queue'));
+  log(chalk.yellow('Dequeueing job: Test queue'));
   return Promise.resolve()
     .then(done);
 }
@@ -181,7 +222,7 @@ exports.startCronServer = () => {
         name: 'Ping',
         cronTime: '* * * * * *', // Every second
         onTick() {
-          log(chalk.green.bold('Pong'));
+          log(chalk.green('Pong'));
         },
       },
     ],
@@ -211,8 +252,8 @@ Getting value from cache by key, or setting it via a function
       .then((users) => console.log(users));
   }
 
-  getUsers(); // Cache missed
-  getUsers(); // Cache hit
+  await getUsers(); // Cache missed
+  await getUsers(); // Cache hit
 ```
 
 ### Invalidating Keys
@@ -223,22 +264,6 @@ The below example will remove `all-users` from the cache
   const {cache} = require('distraught');
   cache.default.invalidate('all-users');
 ```
-
-## Swagger
-
-To enable Swagger:
-
-```javascript
-const server = httpServer({
-  swaggerConfig: {
-    appRoot: __dirname,
-    yamlPath: path.join(__dirname, 'api/swagger/swagger.yaml'),
-  },
-});
-```
-
-[Example of Creating API/Config Folders and Using the Swagger Editor](https://github.com/swagger-api/swagger-node)
-[Swagger - Getting Started](https://github.com/swagger-api/swagger-node/blob/master/docs/README.md)
 
 ## Debugging
 

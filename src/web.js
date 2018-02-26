@@ -24,8 +24,44 @@ const Raven = require('raven');
 const RedisStore = require('connect-redis')(session);
 const redis = require('redis');
 const _ = require('lodash');
-
+const helmet = require('helmet');
 const YAML = require('yamljs');
+
+const cfg = require('./lib/config').cfg;
+const logErr = require('./lib/logger').logErr;
+
+type Req = {|
+  body: Object,
+  query: Object,
+  path: string,
+  params: Object,
+  user: null|Object,
+  headers: Object,
+  originalUrl: string,
+  validationErrors: () => Array<Object>,
+  assert: (string, string) => {
+    isInt: Function,
+    isEmail: Function,
+    equals: Function,
+    len: Function,
+  },
+  sanitize: (string) => Object,
+  isAuthenticated: () => boolean,
+  flash: ('success'|'info'|'error'|'warning', Array<string>|string) => void,
+  session: Object,
+  logout: Function,
+|};
+
+type Res = $ReadOnly<{
+  send: (any) => Res,
+  json: (any) => Res,
+  status: (number) => Res,
+  render: (string, ?Object) => void,
+  locals: Object,
+  redirect: (string) => void,
+  type: (any) => Res,
+  set: (string, string) => void,
+}>;
 
 type OptionsType = {
   publicPath?: string,
@@ -43,6 +79,7 @@ type OptionsType = {
     appRoot: string,
     yamlPath?: string,
     swaggerDocOptions?: Object,
+    pre?: Function,
   }, // for optional swagger integration
   findUserById: (id: number) => Object,
   viewEngine?: string,
@@ -55,6 +92,8 @@ const httpServer = function httpServer(options: OptionsType) {
   // $FlowBug
   const webserver = http.Server(app); // eslint-disable-line
   const io = socketio(webserver);
+
+  app.use(helmet());
 
   if (process.env.SENTRY_DSN) {
     Raven.config(process.env.SENTRY_DSN, {
@@ -186,7 +225,8 @@ const httpServer = function httpServer(options: OptionsType) {
     if (options.swaggerConfig && options.swaggerConfig.yamlPath) {
       const yamlConfig = YAML.load(options.swaggerConfig.yamlPath);
       const swaggerDoc = _.assign({}, yamlConfig, _.get(options, 'swaggerConfig.swaggerDocOptions', {}));
-      app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+      const swaggerPre = _.get(options, 'swaggerConfig.pre', (req, res, next) => next());
+      app.use('/docs', swaggerPre, swaggerUi.serve, swaggerUi.setup(swaggerDoc));
     }
   }
 
@@ -196,13 +236,67 @@ const httpServer = function httpServer(options: OptionsType) {
     passport,
     start() {
       webserver.listen(app.get('port'), () => {
-        //eslint-disable
-        console.log('%s App is running at http://localhost:%d in %s mode', chalk.green('✓'), app.get('port'), app.get('env')); //eslint-disable-line no-console
+        console.log(`${chalk.green('✓')} App is running at http://localhost:${app.get('port')} in ${app.get('env')} mode`); //eslint-disable-line no-console
       });
     },
   };
 };
 
+/**
+ * Wrap an Express handler Fn with this to capture any uncaught exceptions and return a 500 Error
+ * @param {*} genFn
+ */
+function wrap(genFn: (Req, Res) => Promise<*>) {
+  return function handler(req: Req, res: Res, next: Function) {
+    return genFn(req, res)
+      .catch((err) => {
+        logErr(err, {params: req.params, body: req.body, query: req.query, user: req.user});
+
+        if (process.env.NODE_ENV === 'production') {
+          return cfg.pathToServerErrorTemplate ?
+            res.render(cfg.pathToServerErrorTemplate) :
+            res.send('Internal Server Error');
+        }
+
+        return res.status(500).send({
+          error: {
+            message: err.message,
+            stack: err.stack.split('\n'),
+          },
+          req: {
+            body: req.body,
+            params: req.params,
+            query: req.query,
+            user: req.user,
+          },
+        });
+      });
+  };
+}
+
+function jsonWrap(genFn: (Req, Res) => Promise<*>) {
+  return function handler(req: Req, res: Res, next: Function) {
+    return genFn(req, res)
+      .catch((err) => {
+        logErr(err, {params: req.params, body: req.body, query: req.query, user: req.user});
+
+        if (err.message.indexOf('Unauthorized') !== -1) {
+          return res.status(401).send({message: 'Unauthorized'});
+        } else if (err.message.indexOf('Forbidden') !== -1) {
+          return res.status(403).send({message: 'Forbidden'});
+        } else if (err.message.indexOf('timeout') !== -1) {
+          return res.status(504).json({message: 'Server taking too long to respond'});
+        }
+
+        return res.status(500).send({
+          message: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message,
+        });
+      });
+  };
+}
+
 module.exports = {
   httpServer,
+  w: wrap,
+  jw: jsonWrap,
 };

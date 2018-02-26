@@ -1,11 +1,9 @@
 // @flow
+
 const chalk = require('chalk');
-const {httpServer} = require('./web');
-const {enableSQLLogging, addDBConnection, db} = require('./lib/db');
+const {httpServer, jw, w} = require('./web');
 const {slack} = require('./lib/slack');
-const {sg, sgHelper} = require('./lib/sendgrid');
-const {cache, addCache} = require('./lib/cache');
-const {addHeretic, heretic} = require('./lib/heretic');
+const {sg, sgHelper, getOverriddenEmail, overrideEmail, sendEmail} = require('./lib/email');
 const {
   fetchOne,
   fetchMany,
@@ -14,22 +12,52 @@ const {
   update,
   updateOne,
 } = require('./lib/queries');
-const {log} = require('./lib/logger');
-const {toSnakeCase, toCamelCase, encrypt, decrypt} = require('./lib/transformations');
-const {SECOND, MINUTE, HOUR} = require('./lib/constants');
-const {cronServer} = require('./cron');
-const {workerServer} = require('./worker');
-
-module.exports = {
-  cronServer,
-  workerServer,
+const {log, logErr, assertKeys} = require('./lib/logger');
+const {
   toSnakeCase,
   toCamelCase,
   encrypt,
   decrypt,
+  sanitizePhone,
+  formatPhone,
+  formatPrice,
+  formatNumber,
+  getProtocolAndHostname,
+  getHostname,
+} = require('./lib/transformations');
+const {SECOND, MINUTE, HOUR} = require('./lib/constants');
+const {cronServer} = require('./cron');
+const {workerServer} = require('./worker');
+const {sendText} = require('./lib/voip');
+const {request} = require('./lib/request');
+const {createSocketConnection, emit} = require('./lib/socket');
+const {getBucket, uploadFile, deleteFile, streamToBuffer} = require('./lib/storage');
+const {renderPug} = require('./lib/template');
+const {cfg, cache, db, heretic} = require('./lib/config');
+const {init} = require('./lib/init');
+
+module.exports = {
+  cronServer,
+  workerServer,
+
+  toSnakeCase,
+  toCamelCase,
+  encrypt,
+  decrypt,
+  sanitizePhone,
+  formatPhone,
+  formatPrice,
+  formatNumber,
+  getProtocolAndHostname,
+  getHostname,
+
+  init,
+  cfg,
+
   httpServer,
-  enableSQLLogging,
-  addDBConnection,
+  w,
+  jw,
+
   db,
   fetchMany,
   fetchOne,
@@ -37,15 +65,36 @@ module.exports = {
   createOne,
   update,
   updateOne,
+
   slack,
+
   log,
+  logErr,
+  assertKeys,
   chalk,
-  addCache,
-  addHeretic,
+
   heretic,
   cache,
+
+  createSocketConnection,
+  emit,
+
+  request,
+
+  getBucket,
+  uploadFile,
+  deleteFile,
+  streamToBuffer,
+
+  renderPug,
+
   sg,
   sgHelper,
+  getOverriddenEmail,
+  overrideEmail,
+  sendEmail,
+
+  sendText,
 
   SECOND,
   MINUTE,

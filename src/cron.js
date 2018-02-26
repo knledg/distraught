@@ -34,6 +34,7 @@ const cronServer = function cronServer(options: OptionsType) {
     let isEnabled = true;
 
     if (cron.isEnabled && _.isFunction(cron.isEnabled)) {
+      /* $FlowIgnore */
       isEnabled = cron.isEnabled(); // If function, call fn to get bool result
     } else if (cron.hasOwnProperty('isEnabled')) {
       isEnabled = cron.isEnabled; // Standard bool
@@ -65,9 +66,9 @@ const cronServer = function cronServer(options: OptionsType) {
         },
         start: cron.start || true,
       });
-      log(chalk.bold.blue(cron.name), chalk.green.bold('[enabled]'));
+      log(chalk.blue(cron.name), chalk.green('[enabled]'));
     } else {
-      log(chalk.bold.blue(cron.name), chalk.red.bold('[disabled]'));
+      log(chalk.blue(cron.name), chalk.red('[disabled]'));
     }
   });
 };

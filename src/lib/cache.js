@@ -7,10 +7,7 @@ const {MINUTE} = require('./constants');
 const redis = require('redis');
 const log = require('./logger').log;
 
-const cache = {};
-
-exports.cache = cache;
-exports.addCache = function(name: string, options: {connection: string}) {
+exports.addCache = function(name: string, options: {connection: string}, cache: Object) {
   let prefix = null;
   if (process.env.REDIS_PREFIX) {
     prefix = process.env.REDIS_PREFIX;
@@ -29,7 +26,7 @@ exports.addCache = function(name: string, options: {connection: string}) {
           pattern = prefix + pattern;
         }
         if (process.env.DEBUG_CACHE) {
-          log(chalk.cyan.bold(`Scanning keys in cache for ${pattern}`));
+          log(chalk.cyan(`Scanning keys in cache for ${pattern}`));
         }
         client.scan(cursor, 'MATCH', pattern, (err, [newCursor, newArrayOfKeys]: {newCursor: string, newArrayOfKeys: Array<string>}) => {
           if (err) {
@@ -52,7 +49,7 @@ exports.addCache = function(name: string, options: {connection: string}) {
         }
         return client.keys(pattern, (err, keys) => {
           if (process.env.DEBUG_CACHE) {
-            log(chalk.cyan.bold(`Invalidating ${keys.length} keys for pattern: ${pattern}`));
+            log(chalk.cyan(`Invalidating ${keys.length} keys for pattern: ${pattern}`));
           }
           if (err) {
             return reject(err);
@@ -89,7 +86,7 @@ exports.addCache = function(name: string, options: {connection: string}) {
         }
 
         if (process.env.DEBUG_CACHE) {
-          log(chalk.cyan.bold('Invalidating', key));
+          log(chalk.cyan('Invalidating', key));
         }
         client.del(key, (err, res) => {
           return err ? reject(err) : resolve(res);
@@ -146,7 +143,7 @@ exports.addCache = function(name: string, options: {connection: string}) {
         .then((getResult) => {
           if (process.env.DEBUG_CACHE) {
             const hitOrMiss = getResult ? 'hit' : 'missed';
-            log(chalk.cyan.bold(`Cache ${hitOrMiss}: ${key}`));
+            log(chalk.cyan(`Cache ${hitOrMiss}: ${key}`));
           }
           return getResult ? JSON.parse(getResult) : this.set(key, value, ttl);
         }); // don't catch, let error fall through, it probably wasn't Redis
