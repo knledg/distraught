@@ -1,6 +1,6 @@
 
-## [v1.13.0]
-> February 24th, 2018
+## [v2.0.0]
+> February 27th, 2018
 
 ### New functions
 
@@ -63,6 +63,7 @@
 - Upgrade Express from `v4.15.3` to `v4.16.2`
 - Added packages: `pug`, `pretty-error`, `twilio`, `numeral`, `newrelic`
 - Remove unused flowtype definition
+- Can add swagger "pre" middleware before the docs endpoint is exposed
 
 ### Cfg / Env Vars
 
