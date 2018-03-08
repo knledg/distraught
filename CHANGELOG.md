@@ -1,4 +1,9 @@
 
+## [v2.0.1]
+> March 8th, 2018
+
+- Hotfix for `sendText` function, previously was not working correctly
+
 ## [v2.0.0]
 > February 27th, 2018
 

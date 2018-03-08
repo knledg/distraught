@@ -7,7 +7,9 @@ const logErr = require('./logger').logErr;
 type TwilioResponse = Object;
 
 /**
+ * https://www.twilio.com/docs/api/messaging/send-messages
  *
+ * example: require('distraught').sendText({to: toPhone, from: fromTwilioVOIPPhone, message: yourTextMessage})
  * @param {*} payload {to, from, message, statusCallback}
  */
 function sendText(payload: {to: string, from: string, message: string, statusCallback: string}): Promise<null|TwilioResponse> {
@@ -16,8 +18,9 @@ function sendText(payload: {to: string, from: string, message: string, statusCal
     return Promise.resolve(null);
   }
 
-  return new Twilio.RestClient(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-    .sendMessage({
+  return new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+    .messages
+    .create({
       to: `+1${payload.to}`,
       from: `+1${payload.from}`,
       body: payload.message,
