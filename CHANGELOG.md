@@ -1,4 +1,9 @@
 
+## [v2.1.0]
+> March 16th, 2018
+
+- `request(payload)` now optionally takes `{logErrors: false}` in the payload and prevents default logging
+
 ## [v2.0.1]
 > March 8th, 2018
 

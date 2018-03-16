@@ -10,6 +10,7 @@ type AxiosRequest = {|
   method: 'GET'|'POST'|'DELETE'|'PUT',
   data?: Object,
   debug?: any,
+  logErrors?: boolean,
 |};
 
 /**
@@ -27,8 +28,11 @@ function request(payload: AxiosRequest): Promise<any> {
       return response.data;
     })
     .catch((err) => {
-      const message = _.get(err, 'response.data.message', err.message);
-      logErr(new Error(message), {url: payload.url, debug: payload.debug, data: payload.data || '', ms: `${Date.now() - startTime}ms`});
+      if (!payload.hasOwnProperty('logErrors') || payload.logErrors) {
+        const message = _.get(err, 'response.data.message', err.message);
+        logErr(new Error(message), {url: payload.url, debug: payload.debug, data: payload.data || '', ms: `${Date.now() - startTime}ms`});
+      }
+
       throw err;
     });
 }
