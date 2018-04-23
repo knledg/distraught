@@ -146,9 +146,10 @@ const httpServer = function httpServer(options: OptionsType) {
   }
 
   const sessionOpts = _.assign({}, {
-    resave: true,
+    resave: false,
     rolling: true,
-    saveUninitialized: true,
+    saveUninitialized: false,
+    unset: 'destroy',
     secret: process.env.SESSION_SECRET,
     store: sessionStore,
   }, options.session);
@@ -178,22 +179,6 @@ const httpServer = function httpServer(options: OptionsType) {
 
   app.use((req, res, next) => {
     res.locals.user = req.user;
-    next();
-  });
-  app.use((req, res, next) => {
-    // After successful login, redirect back to the intended page
-    if (!req.user &&
-        req.path !== '/login' &&
-        req.path !== '/signup' &&
-        !req.path.match(/^\/auth/) &&
-        !req.path.match(/\./) &&
-        req.session) {
-      req.session.returnTo = req.path;
-    } else if (req.user &&
-        req.path === '/account' &&
-        req.session) {
-      req.session.returnTo = req.path;
-    }
     next();
   });
 
