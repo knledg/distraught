@@ -2,7 +2,28 @@
 
 > I was distraught!!
 
-Distraught is a wrapper around a Node.js Express server that exposes an HTTPServer for web requests, a CronServer for functions that need to be called at set intervals, and a WorkerServer to handle long requests.
+Distraught is a wrapper around a Node.js Express server that exposes an HTTPServer for web requests, a CronServer for functions that need to be called at set intervals, and a WorkerServer to handle long requests. 
+
+## Assumptions
+
+- You have a webserver running Node.js
+- Postgresql as the datastore
+- Redis as the caching layer and sockets
+- RabbitMQ for worker jobs
+
+## Libraries
+
+* [ExpressJS](https://expressjs.com)
+* [Mariner - Vanilla SQL Database Migrations](https://www.npmjs.com/package/mariner)
+* [Heretic - Queueing / Dequeueing Jobs](https://www.npmjs.com/package/heretic)
+* [Google Cloud Storage - File Storage](https://www.npmjs.com/package/@google-cloud/storage)
+* [Sentry - Error Handling](https://www.npmjs.com/package/raven)
+* [Cron - For Timed Jobs](https://www.npmjs.com/package/cron)
+* [Axios - For API Requests](https://www.npmjs.com/package/axios)
+* [Sendgrid - Sending Emails](https://www.npmjs.com/package/sendgrid) 
+* [Twilio - Text Messaging](https://www.npmjs.com/package/twilio)
+* [Socket.IO - Websockets](https://www.npmjs.com/package/socket.io)
+* [Swagger - API Documentation](https://swagger.io/swagger-ui/)
 
 ## Expected Migrations / Tables In Order To Use WorkerServer
 
@@ -71,18 +92,29 @@ logErr(new Error('Whoa..That\'s not good'), {
 
 ```javascript
 
-const {addDBConnection} = require('distraught');
+const d = require('distraught');
 
-const dbConnection = addDBConnection('rw', {connection: process.env.DATABASE_URL});
-
-const dbConnection = addDBConnection('r', {connection: process.env.READ_ONLY_DATABASE_URL});
+d.init({
+  db: {
+    r: { connection: process.env.READONLY_DATABASE_URL },
+    rw: { connection: process.env.READWRITE_DATABASE_URL },
+  },
+  heretic: {
+    default: { db: "r", connection: process.env.AMQP_URL },
+  },
+  cache: {
+    default: { connection: process.env.REDIS_URL },
+  },
+  captureUncaught: true,
+  captureUnhandled: true,
+});
 ```
 
 ### Querying The Database
 
 ```javascript
 
-const {db,toCamelCase, createOne} = require('distraught');
+const {db, toCamelCase, createOne} = require('distraught');
 
 function fetchUsers() {
   return db.r('users')
@@ -100,9 +132,13 @@ function addUser(user) {
 ## HTTPServer
 
 ```javascript
-const {httpServer, addCache} = require('distraught');
+const {httpServer, init} = require('distraught');
 
-addCache('est', {connection: process.env.REDIS_URL}); // optional: if you want to use caching
+init({ 
+  cache: {
+    default: { connection: process.env.REDIS_URL },
+  },
+});
 
 const homeController = require('./controllers/home');
 
@@ -168,10 +204,18 @@ const server = httpServer({
 ```javascript
 // Make sure the Heretic database migration has run
 
-const {workerServer, MINUTE, heretic, chalk, log, addHeretic, addDBConnection} = require('distraught');
+const {init, workerServer, MINUTE, heretic, chalk, log} = require('distraught');
 
-const dbConnection = addDBConnection('default', {connection: process.env.DATABASE_URL});
-addHeretic('default', {connection: process.env.AMQP_URL, dbConnection});
+init({
+  db: {
+    r: { connection: process.env.READONLY_DATABASE_URL },
+    rw: { connection: process.env.READWRITE_DATABASE_URL },
+  },
+  heretic: {
+    default: { db: "r", connection: process.env.AMQP_URL },
+  },
+});
+
 
 function testDequeue(job, message, done) {
   log(chalk.yellow('Dequeueing job: Test queue'));
@@ -230,7 +274,6 @@ exports.startCronServer = () => {
 };
 ```
 
-
 ## Caching
 
 ### Caching Individual Functions
@@ -238,9 +281,13 @@ exports.startCronServer = () => {
 Getting value from cache by key, or setting it via a function
 
 ```javascript
-  const {addCache, cache, MINUTE} = require('distraught');
+  const {init, cache, MINUTE} = require('distraught');
 
-  addCache('default', {connection: process.env.REDIS_URL});
+  init({
+    cache: {
+      default: { connection: process.env.REDIS_URL },
+    },
+  });
 
   const getValueFn = () => {
     return someFuncReturningData();
@@ -264,10 +311,6 @@ The below example will remove `all-users` from the cache
   const {cache} = require('distraught');
   cache.default.invalidate('all-users');
 ```
-
-## Debugging
-
-`DEBUG=express:* <node start script>`
 
 ### Thanks
 
