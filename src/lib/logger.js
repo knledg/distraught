@@ -3,34 +3,13 @@ const _ = require('lodash');
 const chalk = require('chalk');
 const raven = require('raven');
 const moment = require('moment');
-const Logger = require('le_node');
 const PrettyError = require('pretty-error');
 
 const pe = new PrettyError();
 
 const cfg = require('./config').cfg;
 
-/**
- * Create a `log()` Fn, that takes any amount of arguments and logs them to STDOUT
- * In Sentry, logs can be pulled in as part of the Sentry Error's context
- * Also can be used in combination with `chalk` to add colored errors
- */
-let le;
-if (process.env.LOGENTRIES_TOKEN) {
-  le = new Logger({
-    token: process.env.LOGENTRIES_TOKEN,
-  });
-
-  le.on('error', (err) => {
-    console.error('Unable to save logs to logentries', err); // eslint-disable-line
-  });
-}
-
 function log(...args: any): void {
-  if (le) {
-    const messages = _.map(args, argument => chalk.stripColor(argument));
-    le.debug(JSON.stringify(messages));
-  }
   console.log.apply(this, _.concat([moment().format('h:mma')], args)); // eslint-disable-line
 }
 

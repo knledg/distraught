@@ -4,8 +4,6 @@
  */
 const express = require('express');
 const compression = require('compression');
-const swaggerExpress = require('swagger-express-middleware');
-const swaggerUi = require('swagger-ui-express');
 const session = require('express-session');
 const bodyParser = require('body-parser');
 const logger = require('morgan');
@@ -13,13 +11,10 @@ const chalk = require('chalk');
 const lusca = require('lusca');
 const flash = require('express-flash');
 const passport = require('passport');
-const expressValidator = require('express-validator');
 
 const http = require('http');
 const socketio = require('socket.io');
 
-const expressStatusMonitor = require('express-status-monitor');
-const sass = require('node-sass-middleware');
 const Raven = require('raven');
 const RedisStore = require('connect-redis')(session);
 const redis = require('redis');
@@ -83,6 +78,8 @@ type OptionsType = {
   }, // for optional swagger integration
   findUserById: (id: number) => Object,
   viewEngine?: string,
+  enableStatusMonitor?: boolean,
+  enableExpressValidator?: boolean,
 };
 
 const httpServer = function httpServer(options: OptionsType) {
@@ -104,26 +101,28 @@ const httpServer = function httpServer(options: OptionsType) {
     app.use(Raven.requestHandler());
   }
 
-  app.use(expressStatusMonitor({
-    websocket: io,
-  }));
+  if (options.enableStatusMonitor) {
+    app.use(require('express-status-monitor')({
+      websocket: io,
+    }));
+  }
+  
   app.use(compression());
   app.set('view engine', options.viewEngine || 'pug');
   app.use(logger('dev'));
 
   app.use(bodyParser.json(options.bodyParser && options.bodyParser.jsonOptions ? options.bodyParser.jsonOptions : {}));
   app.use(bodyParser.urlencoded(options.bodyParser && options.bodyParser.urlencodedOptions ? _.assign({extended: true}, options.bodyParser.urlencodedOptions) : {extended: true}));
-  app.use(expressValidator());
+  
+  if (process.env.enableExpressValidator) {
+    app.use(require('express-validator')());
+  }
 
   if (options.viewPath) {
     app.set('views', options.viewPath);
   }
 
   if (options.publicPath) {
-    app.use(sass({
-      src: options.publicPath,
-      dest: options.publicPath,
-    }));
     app.use(express.static(options.publicPath, {maxAge: 31557600000}));
   }
 
@@ -183,8 +182,10 @@ const httpServer = function httpServer(options: OptionsType) {
   });
 
   if (options.swaggerConfig && options.swaggerConfig.appRoot) {
+    const swaggerUi = require('swagger-ui-express');
+
     // Exposes /swagger (as JSON) and activates all Swagger Routers
-    swaggerExpress(options.swaggerConfig.yamlPath, app, function(err, middleware) {
+    require('swagger-express-middleware')(options.swaggerConfig.yamlPath, app, function(err, middleware) {
       if (err) { throw err; }
       app.use(
         middleware.metadata(),

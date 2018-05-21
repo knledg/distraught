@@ -2,15 +2,8 @@
 const _ = require('lodash');
 const {log} = require('./lib/logger');
 const chalk = require('chalk');
-const {CronJob} = require('cron');
+let CronJob;
 const Raven = require('raven');
-
-if (process.env.SENTRY_DSN) {
-  Raven.config(process.env.SENTRY_DSN, {
-    autoBreadcrumbs: true,
-    environment: process.env.NODE_ENV,
-  }).install();
-}
 
 type CronType = {
   name: string,
@@ -28,6 +21,17 @@ type OptionsType = {
 const cronServer = function cronServer(options: OptionsType) {
   if (! (options.crons && options.crons.length)) {
     throw new Error('Please specify one or many crons to begin processing on');
+  }
+
+  if (process.env.SENTRY_DSN) {
+    Raven.config(process.env.SENTRY_DSN, {
+      autoBreadcrumbs: true,
+      environment: process.env.NODE_ENV,
+    }).install();
+  }
+
+  if (!CronJob) {
+    CronJob = require('cron').CronJob;
   }
 
   _.each(options.crons, cron => {

@@ -18,20 +18,14 @@ type Config = {
   cache?: Object,
   db?: Object,
   heretic?: Object,
-  enableNewRelic?: boolean,
   captureUncaught?: boolean,
   captureUnhandled?: boolean,
   ignoredStackTraceLines?: Array<string>,
   pathToServerErrorTemplate?: null|string,
-  enableNewRelic?: boolean,
 };
 
 function init(config: Config = {}): void {
   cfg = merge(cfg, config);
-
-  if (cfg.enableNewRelic && process.env.NEW_RELIC_LICENSE_KEY) {
-    require('newrelic');
-  }
 
   if (cfg.captureUncaught) {
     process.on('uncaughtException', require('./logger').logErr);

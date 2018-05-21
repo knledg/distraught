@@ -1,0 +1,7 @@
+{
+  "name": "distraught-examples",
+  "license": "MIT",
+  "dependencies": {
+    "distraught": "^2.1.1"
+  }
+}

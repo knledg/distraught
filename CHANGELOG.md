@@ -1,4 +1,45 @@
 
+## [v3.0.0]
+> May 21st, 2018
+
+### Breaking Changes
+
+- Remove node-sass-middleware
+- Remove Logentries support
+- Remove newrelic support. It needs to be required higher in the stack for optimal usage.
+- Express Status Monitor is off by default but can be turned on with:
+
+```javascript
+Distraught.init({
+  enableStatusMonitor: true,
+});
+```
+
+- Express Validator is off by default but can be turned on with:
+
+```javascript
+Distraught.init({
+  enableExpressValidator: true,
+});
+```
+
+- Swagger isn't required by default if `swaggerConfig` isn't specified in the web server start options. To enable use a config similar to below:
+
+```javascript
+const server = httpServer({
+  swaggerConfig: {
+    appRoot: "./",
+    yamlPath: path.join(__dirname, "path/to/swagger.yaml"),
+    swaggerDocOptions: {
+      host: 'yourdomain.com', 
+      schemes: process.env.NODE_ENV === "development" ? ["http"] : ["https"],
+    },
+  },
+});
+```
+
+- Pug, Twilio, CronJob, and GCS aren't required until the first time those libs are needed.
+
 ## [v2.1.0]
 > March 16th, 2018
 
