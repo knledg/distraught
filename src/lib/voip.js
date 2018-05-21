@@ -1,6 +1,6 @@
 // @flow
 
-const Twilio = require('twilio');
+let Twilio;
 
 const logErr = require('./logger').logErr;
 
@@ -16,7 +16,10 @@ function sendText(payload: {to: string, from: string, message: string, statusCal
   if (!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN)) {
     logErr(new Error('Could not send text message, missing required Twilio env vars'), {payload});
     return Promise.resolve(null);
+  } else if (!Twilio) {
+    Twilio = require('twilio');
   }
+  
 
   return new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
     .messages

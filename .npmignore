@@ -3,3 +3,4 @@ test
 flow
 src
 .vscode
+examples/*

@@ -6,3 +6,4 @@ dist
 .DS_Store
 .vscode/*
 package-lock.json
+require-trace.trace

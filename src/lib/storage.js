@@ -1,6 +1,6 @@
 // @flow
 
-const gcs = require('@google-cloud/storage');
+let gcs;
 const Bluebird = require('bluebird');
 
 type ReadableStream = {
@@ -17,6 +17,8 @@ type ReadableStream = {
 function getBucket(bucketName: string): Object {
   if (!(process.env.GOOGLE_CLOUD_PROJECT && process.env.GOOGLE_CLOUD_AUTH)) {
     throw new Error('Cannot get GCS bucket, missing GCP environment variables');
+  } else if (!gcs) {
+    gcs = require('@google-cloud/storage');
   }
 
   const config = {

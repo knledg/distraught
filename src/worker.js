@@ -1,17 +1,9 @@
 /* @flow */
 const {each, isFunction} = require('lodash');
-const Heretic = require('@esvinson/heretic');
+let Heretic;
 const chalk = require('chalk');
 const {log} = require('./lib/logger');
 const Raven = require('raven');
-
-if (process.env.SENTRY_DSN) {
-  Raven.config(process.env.SENTRY_DSN, {
-    autoBreadcrumbs: true,
-    environment: process.env.NODE_ENV,
-    captureUnhandledRejections: true,
-  }).install();
-}
 
 type QueueType = {|
   name: string,
@@ -33,6 +25,18 @@ type OptionsType = {|
 const pausedQueues = {};
 
 const workerServer = function workerServer(options: OptionsType) {
+  if (process.env.SENTRY_DSN) {
+    Raven.config(process.env.SENTRY_DSN, {
+      autoBreadcrumbs: true,
+      environment: process.env.NODE_ENV,
+      captureUnhandledRejections: true,
+    }).install();
+  }
+
+   if (!Heretic) {
+     Heretic = require('@esvinson/heretic');
+   } 
+
   return {
     heretic: options.heretic,
     ttlReached: false,

@@ -1,11 +1,15 @@
 // @flow
 
-const pug = require('pug');
+let pug;
 
 const cfg = require('./config').cfg;
 
 const compiledPugs = {};
 function renderPug(templatePath: string, pageVars: Object = {}) {
+  if (!pug) {
+    pug = require('pug');
+  }
+
   templatePath = templatePath.indexOf('.pug') === -1 ? `${templatePath}.pug` : templatePath; // eslint-disable-line
   let html;
 

@@ -15,7 +15,6 @@ let cfg = {
     guardedEnvironments: [],
   },
   pathToServerErrorTemplate: null,
-  enableNewRelic: false,
 };
 const cache = {};
 const heretic = {};
