@@ -106,14 +106,14 @@ const httpServer = function httpServer(options: OptionsType) {
       websocket: io,
     }));
   }
-  
+
   app.use(compression());
   app.set('view engine', options.viewEngine || 'pug');
   app.use(logger('dev'));
 
   app.use(bodyParser.json(options.bodyParser && options.bodyParser.jsonOptions ? options.bodyParser.jsonOptions : {}));
   app.use(bodyParser.urlencoded(options.bodyParser && options.bodyParser.urlencodedOptions ? _.assign({extended: true}, options.bodyParser.urlencodedOptions) : {extended: true}));
-  
+
   if (process.env.enableExpressValidator) {
     app.use(require('express-validator')());
   }

@@ -19,7 +19,7 @@ function sendText(payload: {to: string, from: string, message: string, statusCal
   } else if (!Twilio) {
     Twilio = require('twilio');
   }
-  
+
 
   return new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
     .messages

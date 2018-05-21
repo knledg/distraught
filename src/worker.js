@@ -33,9 +33,9 @@ const workerServer = function workerServer(options: OptionsType) {
     }).install();
   }
 
-   if (!Heretic) {
-     Heretic = require('@esvinson/heretic');
-   } 
+  if (!Heretic) {
+    Heretic = require('@esvinson/heretic');
+  }
 
   return {
     heretic: options.heretic,
