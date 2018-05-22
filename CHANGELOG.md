@@ -1,4 +1,9 @@
 
+## [v4.0.1]
+> May 22st, 2018
+
+- No changes, publishing to try and get 4.0 onto the package regsitry
+
 ## [v4.0.0]
 > May 21st, 2018
 
