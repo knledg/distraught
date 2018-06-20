@@ -31,7 +31,12 @@ function logErr(err: Error, extra: Object = {}): void {
     if (extra.user) {
       ravenPayload.user = extra.user;
     }
-    raven.captureException(err, ravenPayload);
+    try {
+      raven.captureException(err, ravenPayload);
+    } catch (captureExceptionErr) {
+      log(pe.render(captureExceptionErr)); // log error we received tried to send to Sentry
+      log(pe.render(err)); // log original error
+    }
   } else {
     let stringified;
     try {
