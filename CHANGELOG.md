@@ -1,4 +1,10 @@
 
+## [v4.1.0]
+> June 23rd, 2018
+
+- If we can't reach Sentry with a captured exception, write to STDOUT
+- Allow engineers to specify `logFormat` in the webserver config to overwrite the default Morgan Logger config that's set
+
 ## [v4.0.1]
 > May 22st, 2018
 
