@@ -4,6 +4,7 @@ let Heretic;
 const chalk = require('chalk');
 const {log} = require('./lib/logger');
 const Raven = require('raven');
+const cfg = require('./lib/config').cfg;
 
 type QueueType = {|
   name: string,
@@ -25,10 +26,10 @@ type OptionsType = {|
 const pausedQueues = {};
 
 const workerServer = function workerServer(options: OptionsType) {
-  if (process.env.SENTRY_DSN) {
-    Raven.config(process.env.SENTRY_DSN, {
+  if (cfg.env.SENTRY_DSN) {
+    Raven.config(cfg.env.SENTRY_DSN, {
       autoBreadcrumbs: true,
-      environment: process.env.NODE_ENV,
+      environment: cfg.env.NODE_ENV,
       captureUnhandledRejections: true,
     }).install();
   }
@@ -131,7 +132,7 @@ const workerServer = function workerServer(options: OptionsType) {
       // database, etc.). The message will be dead-lettered for later inspection (by you)
       this.heretic.on('jobError', err => {
         log(chalk.red.bold('Error with job!'), err);
-        if (process.env.SENTRY_DSN) {
+        if (cfg.env.SENTRY_DSN) {
           Raven.captureException(err);
         }
       });
@@ -140,7 +141,7 @@ const workerServer = function workerServer(options: OptionsType) {
       // will be automatically retried up to the maximum number of retries.
       this.heretic.on('jobFailed', (savedJob, err) => {
         log(chalk.red.bold('Job execution failed!'), err);
-        if (process.env.SENTRY_DSN) {
+        if (cfg.env.SENTRY_DSN) {
           Raven.captureException(err, {
             extra: {
               payload: savedJob && savedJob.payload,
@@ -177,7 +178,7 @@ const workerServer = function workerServer(options: OptionsType) {
             }
 
             const doIt = () => {
-              if (process.env.SENTRY_DSN) {
+              if (cfg.env.SENTRY_DSN) {
                 Raven.setContext({
                   payload: job.payload,
                 });
@@ -206,7 +207,7 @@ const workerServer = function workerServer(options: OptionsType) {
                 });
             };
 
-            if (process.env.SENTRY_DSN) {
+            if (cfg.env.SENTRY_DSN) {
               Raven.context(() => {
                 doIt();
               });

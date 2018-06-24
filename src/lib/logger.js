@@ -3,14 +3,20 @@ const _ = require('lodash');
 const chalk = require('chalk');
 const raven = require('raven');
 const moment = require('moment');
-const PrettyError = require('pretty-error');
 
-const pe = new PrettyError();
+let pe;
 
 const cfg = require('./config').cfg;
 
 function log(...args: any): void {
   console.log.apply(this, _.concat([moment().format('h:mma')], args)); // eslint-disable-line
+}
+
+function requirePE() {
+  if (!pe) {
+    const PrettyError = require('pretty-error');
+    pe = new PrettyError();
+  }
 }
 
 /**
@@ -24,7 +30,7 @@ function log(...args: any): void {
  * logErr(new Error('Something went wrong with CSV Upload'), {fileId: 1})
  */
 function logErr(err: Error, extra: Object = {}): void {
-  if (process.env.SENTRY_DSN) {
+  if (cfg.env.SENTRY_DSN) {
     const ravenPayload: Object = {
       extra: _.omit(extra, 'user'),
     };
@@ -34,10 +40,13 @@ function logErr(err: Error, extra: Object = {}): void {
     try {
       raven.captureException(err, ravenPayload);
     } catch (captureExceptionErr) {
+      requirePE();
       log(pe.render(captureExceptionErr)); // log error we received tried to send to Sentry
       log(pe.render(err)); // log original error
     }
   } else {
+    requirePE();
+
     let stringified;
     try {
       stringified = JSON.stringify(extra);

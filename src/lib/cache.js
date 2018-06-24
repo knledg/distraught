@@ -5,12 +5,13 @@ const chalk = require('chalk');
 const {MINUTE} = require('./constants');
 
 const redis = require('redis');
+const cfg = require('./config').cfg;
 const log = require('./logger').log;
 
 exports.addCache = function(name: string, options: {connection: string}, cache: Object) {
   let prefix = null;
-  if (process.env.REDIS_PREFIX) {
-    prefix = process.env.REDIS_PREFIX;
+  if (cfg.env.REDIS_PREFIX) {
+    prefix = cfg.env.REDIS_PREFIX;
     if (prefix.slice(-1) !== '-') {
       prefix += '-';
     }
@@ -25,7 +26,7 @@ exports.addCache = function(name: string, options: {connection: string}, cache: 
         if (prefix && pattern.indexOf(prefix) !== 0) {
           pattern = prefix + pattern;
         }
-        if (process.env.DEBUG_CACHE) {
+        if (cfg.env.DEBUG_CACHE) {
           log(chalk.cyan(`Scanning keys in cache for ${pattern}`));
         }
         client.scan(cursor, 'MATCH', pattern, (err, [newCursor, newArrayOfKeys]: {newCursor: string, newArrayOfKeys: Array<string>}) => {
@@ -48,7 +49,7 @@ exports.addCache = function(name: string, options: {connection: string}, cache: 
           pattern = prefix + pattern;
         }
         return client.keys(pattern, (err, keys) => {
-          if (process.env.DEBUG_CACHE) {
+          if (cfg.env.DEBUG_CACHE) {
             log(chalk.cyan(`Invalidating ${keys.length} keys for pattern: ${pattern}`));
           }
           if (err) {
@@ -85,7 +86,7 @@ exports.addCache = function(name: string, options: {connection: string}, cache: 
           });
         }
 
-        if (process.env.DEBUG_CACHE) {
+        if (cfg.env.DEBUG_CACHE) {
           log(chalk.cyan('Invalidating', key));
         }
         client.del(key, (err, res) => {
@@ -141,7 +142,7 @@ exports.addCache = function(name: string, options: {connection: string}, cache: 
     getOrSet(key: string, value: any, ttl?: number): Promise<*> {
       return this.get(key)
         .then((getResult) => {
-          if (process.env.DEBUG_CACHE) {
+          if (cfg.env.DEBUG_CACHE) {
             const hitOrMiss = getResult ? 'hit' : 'missed';
             log(chalk.cyan(`Cache ${hitOrMiss}: ${key}`));
           }

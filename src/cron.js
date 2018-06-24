@@ -4,6 +4,7 @@ const {log} = require('./lib/logger');
 const chalk = require('chalk');
 let CronJob;
 const Raven = require('raven');
+const cfg = require('./lib/config').cfg;
 
 type CronType = {
   name: string,
@@ -23,10 +24,10 @@ const cronServer = function cronServer(options: OptionsType) {
     throw new Error('Please specify one or many crons to begin processing on');
   }
 
-  if (process.env.SENTRY_DSN) {
-    Raven.config(process.env.SENTRY_DSN, {
+  if (cfg.env.SENTRY_DSN) {
+    Raven.config(cfg.env.SENTRY_DSN, {
       autoBreadcrumbs: true,
-      environment: process.env.NODE_ENV,
+      environment: cfg.env.NODE_ENV,
     }).install();
   }
 
@@ -56,7 +57,7 @@ const cronServer = function cronServer(options: OptionsType) {
             }
           } catch (err) {
             log(chalk.red.bold(`${cron.name} failed`), err);
-            if (process.env.SENTRY_DSN) {
+            if (cfg.env.SENTRY_DSN) {
               Raven.captureException(err, {
                 extra: {
                   name: cron.name,

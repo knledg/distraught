@@ -3,8 +3,9 @@ const _ = require('lodash');
 const crypto = require('crypto');
 const {URL} = require('url');
 const numeral = require('numeral');
-
 const {format} = require('util');
+
+const cfg = require('./config').cfg;
 
 /**
  * Given a dollar amount, return a formatted price
@@ -157,24 +158,24 @@ module.exports = {
   },
 
   encrypt(plaintext: string): string {
-    if (!(process.env.CRYPTO_KEY && process.env.CRYPTO_ALGO)) {
+    if (!(cfg.env.CRYPTO_KEY && cfg.env.CRYPTO_ALGO)) {
       throw new Error('Missing require environment variables to encrypt data');
     }
-    const key = new Buffer(process.env.CRYPTO_KEY, 'hex');
-    const cipher = crypto.createCipher(process.env.CRYPTO_ALGO, key);
+    const key = new Buffer(cfg.env.CRYPTO_KEY, 'hex');
+    const cipher = crypto.createCipher(cfg.env.CRYPTO_ALGO, key);
     let ciphertext = cipher.update(plaintext, 'utf8', 'hex');
     ciphertext += cipher.final('hex');
     return ciphertext;
   },
 
   decrypt(ciphertext: string): string {
-    if (!(process.env.CRYPTO_KEY && process.env.CRYPTO_ALGO)) {
+    if (!(cfg.env.CRYPTO_KEY && cfg.env.CRYPTO_ALGO)) {
       throw new Error('Missing require environment variables to decrypt data');
     }
     let decrypted: string = '';
     try {
-      const key: Buffer = new Buffer(process.env.CRYPTO_KEY, 'hex');
-      const decipher = crypto.createDecipher(process.env.CRYPTO_ALGO, key);
+      const key: Buffer = new Buffer(cfg.env.CRYPTO_KEY, 'hex');
+      const decipher = crypto.createDecipher(cfg.env.CRYPTO_ALGO, key);
       decrypted = decipher.update(ciphertext, 'hex', 'utf8');
       decrypted += decipher.final('utf8');
     } catch (err) {

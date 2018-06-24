@@ -15,6 +15,7 @@ let cfg = {
     guardedEnvironments: [],
   },
   pathToServerErrorTemplate: null,
+  env: process.env,
 };
 const cache = {};
 const heretic = {};

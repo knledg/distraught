@@ -5,6 +5,7 @@ const knex = require('knex');
 const merge = require('lodash').merge;
 
 const log = require('./logger').log;
+const cfg = require('./config').cfg;
 
 type ConnectionOptsType = {
   debug: ?any,
@@ -20,7 +21,7 @@ const connectionOptionDefaults = {
   client: 'pg',
   pool: {
     min: 2,
-    max: process.env.DB_CONNECTION_POOL_MAX || 10,
+    max: cfg.env.DB_CONNECTION_POOL_MAX || 10,
   },
 };
 
@@ -60,7 +61,7 @@ function addDBConnection(name: string, options: ConnectionOptsType, db: Object):
 
   const knexInstance = knex(merge({}, connectionOptionDefaults, options));
 
-  if (process.env.KNEX_DEBUG) {
+  if (cfg.env.KNEX_DEBUG) {
     enableSQLLogging(knexInstance, name);
   }
 
