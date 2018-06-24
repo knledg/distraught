@@ -41,6 +41,7 @@ declare var process: { // eslint-disable-line
     TWILIO_AUTH_TOKEN?: string,
 
     SESSION_SECRET: string,
+    TTL_IN_SECONDS?: string,
 
     SENTRY_DSN?: string,
   },

@@ -1,26 +1,20 @@
 // @flow
-/**
- * Module dependencies.
- */
-const express = require('express');
-const compression = require('compression');
-const session = require('express-session');
-const bodyParser = require('body-parser');
-const logger = require('morgan');
-const chalk = require('chalk');
-const lusca = require('lusca');
-const flash = require('express-flash');
-const passport = require('passport');
-
-const http = require('http');
-const socketio = require('socket.io');
-
-const Raven = require('raven');
-const RedisStore = require('connect-redis')(session);
-const redis = require('redis');
-const _ = require('lodash');
-const helmet = require('helmet');
-const YAML = require('yamljs');
+let express;
+let compression;
+let session;
+let bodyParser;
+let logger;
+let chalk;
+let lusca;
+let flash;
+let passport;
+let http;
+let Raven;
+let RedisStore;
+let redis;
+let _;
+let helmet;
+let YAML;
 
 const cfg = require('./lib/config').cfg;
 const logErr = require('./lib/logger').logErr;
@@ -81,22 +75,56 @@ type OptionsType = {
   viewEngine?: string,
   enableStatusMonitor?: boolean,
   enableExpressValidator?: boolean,
+  enableSocketIO?: boolean,
 };
 
+let webModulesLoaded = false;
+
+function requireWebModules() {
+  if (!(webModulesLoaded)) {
+    express = require('express');
+    compression = require('compression');
+    session = require('express-session');
+    bodyParser = require('body-parser');
+    logger = require('morgan');
+    chalk = require('chalk');
+    lusca = require('lusca');
+    flash = require('express-flash');
+    passport = require('passport');
+
+    http = require('http');
+
+    Raven = require('raven');
+    RedisStore = require('connect-redis')(session);
+    redis = require('redis');
+
+    _ = require('lodash');
+    helmet = require('helmet');
+    YAML = require('yamljs');
+
+    webModulesLoaded = true;
+  }
+}
+
 const httpServer = function httpServer(options: OptionsType) {
+  requireWebModules();
   const app = express();
-  app.set('port', process.env.PORT || 3000);
+  app.set('port', cfg.env.PORT || 3000);
 
   // $FlowBug
   const webserver = http.Server(app); // eslint-disable-line
-  const io = socketio(webserver);
+  let io;
+
+  if (options.enableSocketIO) {
+    io = require('socket.io')(webserver);
+  }
 
   app.use(helmet());
 
-  if (process.env.SENTRY_DSN) {
-    Raven.config(process.env.SENTRY_DSN, {
+  if (cfg.env.SENTRY_DSN) {
+    Raven.config(cfg.env.SENTRY_DSN, {
       autoBreadcrumbs: true,
-      environment: process.env.NODE_ENV,
+      environment: cfg.env.NODE_ENV,
       captureUnhandledRejections: true,
     }).install();
     app.use(Raven.requestHandler());
@@ -115,7 +143,7 @@ const httpServer = function httpServer(options: OptionsType) {
   app.use(bodyParser.json(options.bodyParser && options.bodyParser.jsonOptions ? options.bodyParser.jsonOptions : {}));
   app.use(bodyParser.urlencoded(options.bodyParser && options.bodyParser.urlencodedOptions ? _.assign({extended: true}, options.bodyParser.urlencodedOptions) : {extended: true}));
 
-  if (process.env.enableExpressValidator) {
+  if (options.enableExpressValidator) {
     app.use(require('express-validator')());
   }
 
@@ -132,16 +160,16 @@ const httpServer = function httpServer(options: OptionsType) {
   app.use(lusca.xssProtection(true));
 
   let sessionStore = null;
-  if (process.env.REDIS_URL) {
-    const redisOptions = {url: process.env.REDIS_URL, prefix: ''};
-    if (process.env.REDIS_PREFIX) {
-      redisOptions.prefix = process.env.REDIS_PREFIX;
+  if (cfg.env.REDIS_URL) {
+    const redisOptions = {url: cfg.env.REDIS_URL, prefix: ''};
+    if (cfg.env.REDIS_PREFIX) {
+      redisOptions.prefix = cfg.env.REDIS_PREFIX;
     }
     const redisClient = redis.createClient(redisOptions);
     sessionStore = new RedisStore({
-      ttl: process.env.TTL_IN_SECONDS || 86400, // one day
+      ttl: cfg.env.TTL_IN_SECONDS || 86400, // one day
       client: redisClient,
-      url: process.env.REDIS_URL,
+      url: cfg.env.REDIS_URL,
     });
   }
 
@@ -150,7 +178,7 @@ const httpServer = function httpServer(options: OptionsType) {
     rolling: true,
     saveUninitialized: false,
     unset: 'destroy',
-    secret: process.env.SESSION_SECRET,
+    secret: cfg.env.SESSION_SECRET,
     store: sessionStore,
   }, options.session);
 
@@ -239,7 +267,7 @@ function wrap(genFn: (Req, Res) => Promise<*>) {
       .catch((err) => {
         logErr(err, {params: req.params, body: req.body, query: req.query, user: req.user});
 
-        if (process.env.NODE_ENV === 'production') {
+        if (cfg.env.NODE_ENV === 'production') {
           return cfg.pathToServerErrorTemplate ?
             res.render(cfg.pathToServerErrorTemplate) :
             res.send('Internal Server Error');
@@ -276,7 +304,7 @@ function jsonWrap(genFn: (Req, Res) => Promise<*>) {
         }
 
         return res.status(500).send({
-          message: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message,
+          message: cfg.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message,
         });
       });
   };

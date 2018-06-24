@@ -1,13 +1,29 @@
 /* @flow */
 const _ = require('lodash');
-const sendgrid = require('sendgrid');
-const bluebird = require('bluebird');
-
 const logErr = require('./logger').logErr;
 const cfg = require('./config').cfg;
 
-sendgrid.Promise = bluebird;
-const sg = sendgrid(process.env.SENDGRID_API_KEY);
+let bluebird;
+let sgHelpers;
+let sgMail;
+
+let Personalization;
+let Mail;
+let Attachment;
+
+function requireSG() {
+  if (!(sgMail || sgHelpers)) {
+    bluebird = require('bluebird');
+    sgHelpers = require('@sendgrid/helpers');
+    Personalization = sgHelpers.classes.Personalization;
+    Attachment = sgHelpers.classes.Attachment;
+    Mail = sgHelpers.classes.Mail;
+
+    sgMail = require('@sendgrid/mail');
+    sgMail.Promise = bluebird;
+    sgMail.setApiKey(cfg.env.SENDGRID_API_KEY);
+  }
+}
 
 
 /**
@@ -22,8 +38,18 @@ function getOverriddenEmail(email: string): string {
   if (!cfg.email.devEmail) {
     throw new Error('Email failed to send: cfg.email.devEmail is not set');
   }
+
   const devEmailParts = cfg.email.devEmail.split('@');
-  return `${devEmailParts[0]}+${email.replace('@', '.at.')}@${devEmailParts[1]}`;
+
+  // prevent accidentally modifying an already overriden email
+  if (email.includes(devEmailParts[1])) {
+    return email;
+  }
+
+  return `${devEmailParts[0]}+${email.replace('@', '.at.')}@${
+    devEmailParts[1]
+  }`;
+
 }
 
 /**
@@ -31,7 +57,7 @@ function getOverriddenEmail(email: string): string {
  * @param {String} email [address]
  */
 function overrideEmail(email: string): string {
-  if (!_.includes(cfg.email.guardedEnvironments, process.env.NODE_ENV)) {
+  if (!_.includes(cfg.email.guardedEnvironments, cfg.env.NODE_ENV)) {
     return email;
   }
   if (!(cfg.email.devEmail)) {
@@ -50,23 +76,34 @@ type EmailPayload = {|
   replyToAddress?: string,
   replyToName?: string,
   contentType?: string,
-  toMultiple?: Array<Object>,
-  attachments?: Array<Object>,
+  recipients?: Array<Object>,
+  attachments?: Array<{
+    content: any,
+    filename: string,
+    type: string,
+    disposition: string,
+  }>,
+  asm?: {
+    groupId: number,
+  },
 |};
 
 /**
  * Given an email payload, send an email through Sendgrid
+ * https://github.com/sendgrid/sendgrid-nodejs/blob/0164ff8751e1dc9cacdc17af23dc06a21065b773/use-cases/kitchen-sink.md
  * @param {Object} payload
  */
 async function sendEmail(opts: EmailPayload): Promise<boolean|Object> {
-  const personalization = new sendgrid.mail.Personalization();
-  if (!((opts.toMultiple && opts.toMultiple) || (opts.toAddress && opts.toAddress.length && opts.toName && opts.toName.length))) {
+  requireSG();
+
+  const personalization = new Personalization();
+  if (!((opts.recipients && opts.recipients) || (opts.toAddress && opts.toAddress.length && opts.toName && opts.toName.length))) {
     logErr(new Error('Unable to send email, invalid options'), {opts});
     return false;
   }
 
-  if (opts.toMultiple) {
-    const validRecipients = _.reject(opts.toMultiple, (recipient) => !recipient.toAddress);
+  if (opts.recipients) {
+    const validRecipients = _.reject(opts.recipients, (recipient) => !recipient.toAddress);
     if (!(validRecipients && validRecipients.length)) {
       logErr(new Error('Unable to send email, no valid recipient'), {opts});
       return false;
@@ -79,16 +116,31 @@ async function sendEmail(opts: EmailPayload): Promise<boolean|Object> {
     personalization.addTo({email: overrideEmail(opts.toAddress), name: opts.toName});
   }
 
-  const mail = new sendgrid.mail.Mail();
+  _.each(_.get(opts, 'cc', []), (email) => {
+    personalization.addCc({email});
+  });
+
+  const mail = new Mail();
   mail.setFrom({email: opts.fromAddress, name: opts.fromName});
   mail.addPersonalization(personalization);
   mail.setSubject(opts.subject);
-  mail.addContent(new sendgrid.mail.Content(opts.contentType || 'text/html', opts.html));
+  mail.addHtmlContent(opts.html);
+
+  if (opts.asm) {
+    mail.setAsm(opts.asm);
+  }
+
+  if (opts.replyToAddress && opts.replyToName) {
+    mail.setReplyTo({
+      email: opts.replyToAddress,
+      name: opts.replyToName,
+    });
+  }
 
   if (opts.attachments && opts.attachments.length) {
     _.each(opts.attachments, (attachment) => {
       const content = new Buffer(attachment.content).toString('base64');
-      const mailAttachment = new sendgrid.mail.Attachment();
+      const mailAttachment = new Attachment();
       mailAttachment.setFilename(attachment.title);
       mailAttachment.setContent(content);
       mailAttachment.setType(attachment.type);
@@ -96,18 +148,10 @@ async function sendEmail(opts: EmailPayload): Promise<boolean|Object> {
     });
   }
 
-  const request = sg.emptyRequest({
-    method: 'POST',
-    path: '/v3/mail/send',
-    body: mail.toJSON(),
-  });
-
-  return sg.API(request); // eslint-disable-line new-cap
+  return sgMail.send(mail);
 }
 
 module.exports = {
-  sg,
-  sgHelper: sendgrid.mail,
   getOverriddenEmail,
   overrideEmail,
   sendEmail,

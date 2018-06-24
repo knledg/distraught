@@ -2,8 +2,9 @@
 const axios = require('axios');
 const chalk = require('chalk');
 const log = require('./logger').log;
+const cfg = require('./config').cfg;
 
-const url = process.env.SLACK_WEBHOOK_URL;
+const url = cfg.env.SLACK_WEBHOOK_URL;
 
 declare type SlackPayloadAttachmentField = {
   title?: string,
@@ -50,7 +51,7 @@ module.exports = {
   slack: {
     send(data: SlackPayload): Promise<*> {
       if (!url) {
-        if (process.env.NODE_ENV === 'development') {
+        if (cfg.env.NODE_ENV === 'development') {
           log(chalk.magenta.bold('Slack Notification (Not Sent): '), getMessage(data));
           return Promise.resolve();
         }

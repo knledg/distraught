@@ -1,4 +1,19 @@
 
+## [v5.0.0]
+> June 23rd, 2018
+
+- Add `options.enableSocketIO` to webserver. If it isn't specified, Distraught won't require socket.io
+- Fix bug referencing `process.env.enableExpressValidator`, this should have been `options.enableExpressValidator`
+- Move `process.env` checks to `cfg` so it's called all in one place. All `process.env` vars can be referenced through `cfg.env.<VAR>`
+- Upgrade Express Status Monitor to the latest version
+- Update Sendgrid to the latest versions
+- Pretty Error, Sendgrid, and all webserver modules aren't required until the first time those libs are needed.
+
+### Breaking Changes
+
+- sgHelper is no longer importable 
+- Previously a socket.io instance was always created on the webserver. Now in the webconfig you must specify `enableSocketIO: true` to maintain backwards compatibility with the previous behavior
+
 ## [v4.1.0]
 > June 23rd, 2018
 
