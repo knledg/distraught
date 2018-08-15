@@ -173,7 +173,7 @@ const workerServer = function workerServer(options: OptionsType) {
           log(chalk.bold.blue(queue.name), chalk.green.bold('[enabled]'));
           this.heretic.process(queue.name, queue.concurrency || 1, (job: Object, message: string, done: Function) => {
             if (queue.debug) {
-              log(chalk.cyan.bold(`${queue.name} ${job.payload.id}`), chalk.blue.bold('[started]'));
+              log(chalk.cyan.bold(queue.name), chalk.blue.bold('[started]'));
             }
 
             const doIt = () => {

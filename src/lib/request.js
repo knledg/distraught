@@ -10,7 +10,8 @@ type AxiosRequest = {|
   method: 'GET'|'POST'|'DELETE'|'PUT',
   data?: Object,
   debug?: any,
-  logErrors?: boolean,
+  logErrors?: boolean, // if there is an error, automatically log to Sentry
+  disableDataLogging?: boolean, // will disable logging `payload.data` to stdout, useful for sensitive information or large payloads
 |};
 
 /**
@@ -22,7 +23,7 @@ function request(payload: AxiosRequest): Promise<any> {
   return axios(payload)
     .then((response) => {
       log(chalk.blue(payload.method.toUpperCase()), chalk.white(payload.url), chalk.cyan(response.status), chalk.green(`${Date.now() - startTime}ms`));
-      if (payload.method.toUpperCase() === 'POST' && payload.data) {
+      if (payload.method.toUpperCase() === 'POST' && payload.data && !payload.disableDataLogging) {
         log(payload.data);
       }
       return response.data;

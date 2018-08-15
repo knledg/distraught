@@ -1,3 +1,9 @@
+## [v4.2.0]
+> June 23rd, 2018
+
+- Add `disableDataLogging` to `request` so that the payload is not logged to stdout. This is beneficial for sensitive data or large payloads
+- Fix a bug in the worker job logging where a variable was already outputting as "undefined"
+
 
 ## [v4.1.0]
 > June 23rd, 2018
