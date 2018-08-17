@@ -1,5 +1,5 @@
 // @flow
-const {merge, each} = require('lodash');
+const {merge, each, keys, omit} = require('lodash');
 
 let {db, heretic, cache, cfg} = require('./config');
 
@@ -35,15 +35,15 @@ function init(config: Config = {}): void {
   }
 
   if (cfg.db) {
-    each(cfg.db, (options, name) => addDBConnection(name, options, db));
+    each(omit(cfg.db, keys(db)), (options, name) => addDBConnection(name, options, db));
   }
 
   if (cfg.cache) {
-    each(cfg.cache, (options, name) => addCache(name, options, cache));
+    each(omit(cfg.cache, keys(cache)), (options, name) => addCache(name, options, cache));
   }
 
   if (cfg.heretic) {
-    each(cfg.heretic, (options, name) => addHeretic(name, options, heretic, db));
+    each(omit(cfg.heretic, keys(heretic)), (options, name) => addHeretic(name, options, heretic, db));
   }
 }
 
