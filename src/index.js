@@ -15,7 +15,9 @@ const {
 const {log, logErr, assertKeys} = require('./lib/logger');
 const {
   toSnakeCase,
+  toSnakeCaseCached,
   toCamelCase,
+  toCamelCaseCached,
   encrypt,
   decrypt,
   sanitizePhone,
@@ -41,7 +43,9 @@ module.exports = {
   workerServer,
 
   toSnakeCase,
+  toSnakeCaseCached,
   toCamelCase,
+  toCamelCaseCached,
   encrypt,
   decrypt,
   sanitizePhone,

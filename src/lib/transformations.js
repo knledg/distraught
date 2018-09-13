@@ -6,6 +6,10 @@ const numeral = require('numeral');
 
 const {format} = require('util');
 
+// memory caches
+const camelCache = {};
+const snakeCache = {};
+
 /**
  * Given a dollar amount, return a formatted price
  * @param {Number} amount
@@ -138,6 +142,25 @@ module.exports = {
   },
 
   /**
+   * [toSnakeCaseCached - Convert a payload's keys from camelCase to snake_case (Use Memory Cache)]
+   * @param  {object} payload
+   * @return {object}
+   */
+  toSnakeCaseCached(payload: Object|Array<Object>): Object {
+    if (Array.isArray(payload)) {
+      return _.map(payload, (item) => {
+        return _.mapKeys(item, (value, key) => {
+          return snakeCache[key] ? snakeCache[key] : (snakeCache[key] = _.snakeCase(key));
+        });
+      });
+    }
+
+    return _.mapKeys(payload, (value, key) => {
+      return snakeCache[key] ? snakeCache[key] : (snakeCache[key] = _.snakeCase(key));
+    });
+  },
+
+  /**
    * [toCamelCase - Convert a payload's keys from snake_case to camelCase]
    * @param  {object} payload
    * @return {object}
@@ -153,6 +176,25 @@ module.exports = {
 
     return _.mapKeys(payload, (value, key) => {
       return _.camelCase(key);
+    });
+  },
+
+  /**
+   * [toCamelCaseCached - Convert a payload's keys from snake_case to camelCase (Use Memory Cache)]
+   * @param  {object} payload
+   * @return {object}
+   */
+  toCamelCaseCached(payload: Object|Array<Object>): Object {
+    if (Array.isArray(payload)) {
+      return _.map(payload, (item) => {
+        return _.mapKeys(item, (value, key) => {
+          return camelCache[key] ? camelCache[key] : (camelCache[key] = _.camelCase(key));
+        });
+      });
+    }
+
+    return _.mapKeys(payload, (value, key) => {
+      return camelCache[key] ? camelCache[key] : (camelCache[key] = _.camelCase(key));
     });
   },
 
