@@ -43,6 +43,8 @@ declare var process: { // eslint-disable-line
     SESSION_SECRET: string,
 
     SENTRY_DSN?: string,
+
+    TTL_IN_SECONDS?: string,
   },
   cwd: Function,
   on: Function,

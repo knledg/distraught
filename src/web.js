@@ -83,9 +83,19 @@ type OptionsType = {
   enableExpressValidator?: boolean,
 };
 
+const {
+  PORT,
+  SENTRY_DSN,
+  REDIS_URL,
+  REDIS_PREFIX,
+  TTL_IN_SECONDS,
+  SESSION_SECRET,
+  NODE_ENV,
+} = process.env;
+
 const httpServer = function httpServer(options: OptionsType) {
   const app = express();
-  app.set('port', process.env.PORT || 3000);
+  app.set('port', PORT || 3000);
 
   // $FlowBug
   const webserver = http.Server(app); // eslint-disable-line
@@ -93,10 +103,10 @@ const httpServer = function httpServer(options: OptionsType) {
 
   app.use(helmet());
 
-  if (process.env.SENTRY_DSN) {
-    Raven.config(process.env.SENTRY_DSN, {
+  if (SENTRY_DSN) {
+    Raven.config(SENTRY_DSN, {
       autoBreadcrumbs: true,
-      environment: process.env.NODE_ENV,
+      environment: NODE_ENV,
       captureUnhandledRejections: true,
     }).install();
     app.use(Raven.requestHandler());
@@ -115,7 +125,7 @@ const httpServer = function httpServer(options: OptionsType) {
   app.use(bodyParser.json(options.bodyParser && options.bodyParser.jsonOptions ? options.bodyParser.jsonOptions : {}));
   app.use(bodyParser.urlencoded(options.bodyParser && options.bodyParser.urlencodedOptions ? _.assign({extended: true}, options.bodyParser.urlencodedOptions) : {extended: true}));
 
-  if (process.env.enableExpressValidator) {
+  if (options.enableExpressValidator) {
     app.use(require('express-validator')());
   }
 
@@ -132,17 +142,20 @@ const httpServer = function httpServer(options: OptionsType) {
   app.use(lusca.xssProtection(true));
 
   let sessionStore = null;
-  if (process.env.REDIS_URL) {
-    const redisOptions = {url: process.env.REDIS_URL, prefix: ''};
-    if (process.env.REDIS_PREFIX) {
-      redisOptions.prefix = process.env.REDIS_PREFIX;
+  if (REDIS_URL) {
+    const redisOptions = {url: REDIS_URL, prefix: ''};
+    if (REDIS_PREFIX) {
+      redisOptions.prefix = REDIS_PREFIX;
     }
     const redisClient = redis.createClient(redisOptions);
     sessionStore = new RedisStore({
-      ttl: process.env.TTL_IN_SECONDS || 86400, // one day
+      ttl: TTL_IN_SECONDS || 86400, // one day
       client: redisClient,
-      url: process.env.REDIS_URL,
+      url: REDIS_URL,
     });
+
+    const redisAdapter = require('socket.io-redis');
+    io.adapter(redisAdapter(REDIS_URL));
   }
 
   const sessionOpts = _.assign({}, {
@@ -150,7 +163,7 @@ const httpServer = function httpServer(options: OptionsType) {
     rolling: true,
     saveUninitialized: false,
     unset: 'destroy',
-    secret: process.env.SESSION_SECRET,
+    secret: SESSION_SECRET,
     store: sessionStore,
   }, options.session);
 
@@ -239,7 +252,7 @@ function wrap(genFn: (Req, Res) => Promise<*>) {
       .catch((err) => {
         logErr(err, {params: req.params, body: req.body, query: req.query, user: req.user});
 
-        if (process.env.NODE_ENV === 'production') {
+        if (NODE_ENV === 'production') {
           return cfg.pathToServerErrorTemplate ?
             res.render(cfg.pathToServerErrorTemplate) :
             res.send('Internal Server Error');
@@ -276,7 +289,7 @@ function jsonWrap(genFn: (Req, Res) => Promise<*>) {
         }
 
         return res.status(500).send({
-          message: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message,
+          message: NODE_ENV === 'production' ? 'Internal Server Error' : err.message,
         });
       });
   };

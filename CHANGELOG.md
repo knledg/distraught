@@ -1,3 +1,18 @@
+## [v4.4.0]
+> October 9th, 2018
+
+- If REDIS_URL is specified, SocketIO will use Redis instead of in-memory for managing connections. This allows for horizontal scaling of the web process. 
+
+### Minor Breaking Change
+- Previously `process.env.enableExpressValidator` would enable the express validator plugin, but this was intended to be `options.enableExpressValidator`. 
+
+## [v4.3.0]
+> September 13th, 2018
+
+- Support cached versions of toCamelCase / toSnakeCase for processes that repeat converting the same keys over and over. (more performant)
+- Don't reinitialize existing database connections if they were already intialized
+
+
 ## [v4.2.0]
 > June 23rd, 2018
 
