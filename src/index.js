@@ -32,6 +32,8 @@ const {
   formatNumber,
   getProtocolAndHostname,
   getHostname,
+  formatCap,
+  formatAddress
 } = require("./lib/transformations");
 const { SECOND, MINUTE, HOUR } = require("./lib/constants");
 const { cronServer } = require("./cron");
@@ -62,6 +64,8 @@ module.exports = {
   sanitizePhone,
   formatPhone,
   formatPrice,
+  formatCap,
+  formatAddress,
   formatNumber,
   getProtocolAndHostname,
   getHostname,
