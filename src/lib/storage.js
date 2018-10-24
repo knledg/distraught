@@ -1,7 +1,7 @@
 // @flow
 
 let gcs;
-const Bluebird = require('bluebird');
+const Bluebird = require("bluebird");
 
 type ReadableStream = {
   on: Function,
@@ -16,15 +16,17 @@ type ReadableStream = {
  */
 function getBucket(bucketName: string): Object {
   if (!(process.env.GOOGLE_CLOUD_PROJECT && process.env.GOOGLE_CLOUD_AUTH)) {
-    throw new Error('Cannot get GCS bucket, missing GCP environment variables');
+    throw new Error("Cannot get GCS bucket, missing GCP environment variables");
   } else if (!gcs) {
-    gcs = require('@google-cloud/storage');
+    gcs = require("@google-cloud/storage");
   }
 
   const config = {
     projectId: process.env.GOOGLE_CLOUD_PROJECT,
     keyFilename: null,
-    credentials: JSON.parse(Buffer.from(process.env.GOOGLE_CLOUD_AUTH, 'base64').toString()),
+    credentials: JSON.parse(
+      Buffer.from(process.env.GOOGLE_CLOUD_AUTH, "base64").toString()
+    ),
     promise: Bluebird,
     maxRetries: 5,
   };
@@ -36,21 +38,27 @@ function getBucket(bucketName: string): Object {
  * Given a path, a bucket, a file, a content type, and optionally whether the file should be publicly accessibly, upload file to GCS
  * @param {Object} payload
  */
-function uploadFile(payload: {path: string, bucket: string, file: Buffer, contentType: string, makePublic: boolean}): Promise<Buffer> {
+function uploadFile(payload: {
+  path: string,
+  bucket: string,
+  file: Buffer,
+  contentType: string,
+  makePublic: boolean,
+}): Promise<Buffer> {
   return new Bluebird((resolve: Function, reject: Function) => {
     const bucket = getBucket(payload.bucket);
     const file = bucket.file(payload.path);
     const stream = file.createWriteStream({
       metadata: {
-        cacheControl: 'no-cache, no-store, must-revalidate',
-        pragma: 'no-cache',
+        cacheControl: "no-cache, no-store, must-revalidate",
+        pragma: "no-cache",
         expires: 0,
         contentType: payload.contentType,
       },
       public: payload.makePublic,
     });
-    stream.on('error', reject);
-    stream.on('finish', resolve);
+    stream.on("error", reject);
+    stream.on("finish", resolve);
     stream.end(payload.file);
   });
 }
@@ -59,7 +67,7 @@ function uploadFile(payload: {path: string, bucket: string, file: Buffer, conten
  * Given a bucket and file path, delete the file
  * @param {Object} opts
  */
-function deleteFile(opts: {bucket: string, path: string}): Promise<any> {
+function deleteFile(opts: { bucket: string, path: string }): Promise<any> {
   const bucket = getBucket(opts.bucket);
   const file = bucket.file(opts.path);
   return file.delete();
@@ -70,14 +78,17 @@ function deleteFile(opts: {bucket: string, path: string}): Promise<any> {
  * @param {*} stream
  * @param {*} callback
  */
-function streamToArray(stream: ReadableStream, callback: (null|Error, Array<Buffer>) => void): void {
+function streamToArray(
+  stream: ReadableStream,
+  callback: (null | Error, Array<Buffer>) => void
+): void {
   let arr = [];
 
-  stream.on('data', onData);
-  stream.once('end', onEnd);
-  stream.once('error', callback);
-  stream.once('error', cleanup);
-  stream.once('close', cleanup);
+  stream.on("data", onData);
+  stream.once("end", onEnd);
+  stream.once("error", callback);
+  stream.once("error", cleanup);
+  stream.once("close", cleanup);
 
   function onData(doc) {
     if (!Array.isArray(arr)) {
@@ -93,11 +104,11 @@ function streamToArray(stream: ReadableStream, callback: (null|Error, Array<Buff
 
   function cleanup() {
     arr = [];
-    stream.removeListener('data', onData);
-    stream.removeListener('end', onEnd);
-    stream.removeListener('error', callback);
-    stream.removeListener('error', cleanup);
-    stream.removeListener('close', cleanup);
+    stream.removeListener("data", onData);
+    stream.removeListener("end", onEnd);
+    stream.removeListener("error", callback);
+    stream.removeListener("error", cleanup);
+    stream.removeListener("close", cleanup);
   }
 }
 
@@ -115,12 +126,11 @@ function streamToBuffer(stream: ReadableStream): Promise<Buffer> {
       if (err) {
         return reject(err);
       } else if (!arr) {
-        return reject(new Error('File not found'));
+        return reject(new Error("File not found"));
       }
       return resolve(Buffer.concat(arr));
     });
   });
 }
 
-
-module.exports = {getBucket, uploadFile, deleteFile, streamToBuffer};
+module.exports = { getBucket, uploadFile, deleteFile, streamToBuffer };

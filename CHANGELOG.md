@@ -1,3 +1,15 @@
+## [v4.5.0]
+> October 24th, 2018
+
+### Project updates
+
+- Added Prettier, added Ava for unit tests
+
+### Feature updates
+
+- Add new fn `formatAddress`
+- Add new fn `formatCap` (format capitalization)
+
 ## [v4.4.0]
 > October 9th, 2018
 

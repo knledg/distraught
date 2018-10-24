@@ -1,10 +1,10 @@
 // @flow
-const chalk = require('chalk');
-const clone = require('lodash').clone;
-const knex = require('knex');
-const merge = require('lodash').merge;
+const chalk = require("chalk");
+const clone = require("lodash").clone;
+const knex = require("knex");
+const merge = require("lodash").merge;
 
-const log = require('./logger').log;
+const log = require("./logger").log;
 
 type ConnectionOptsType = {
   debug: ?any,
@@ -12,47 +12,60 @@ type ConnectionOptsType = {
   pool?: {
     min: number,
     max: number,
-  }
+  },
 };
 
 const connectionOptionDefaults = {
   debug: false,
-  client: 'pg',
+  client: "pg",
   pool: {
     min: 2,
     max: process.env.DB_CONNECTION_POOL_MAX || 10,
   },
 };
 
-function enableSQLLogging(knexInstance: Function, connectionName: string): void {
+function enableSQLLogging(
+  knexInstance: Function,
+  connectionName: string
+): void {
   const runningQueries = {};
-  knexInstance.on('query', (query) => {
+  knexInstance.on("query", (query) => {
     runningQueries[query.__knexQueryUid] = Date.now();
   });
 
-  knexInstance.on('query-response', (response, query, builder) => {
-    let totalTimeInMS = chalk.green('unknown execution time');
+  knexInstance.on("query-response", (response, query) => {
+    let totalTimeInMS = chalk.green("unknown execution time");
 
     if (runningQueries[query.__knexQueryUid]) {
-      totalTimeInMS = chalk.green(`${Date.now() - runningQueries[query.__knexQueryUid]}ms`);
+      totalTimeInMS = chalk.green(
+        `${Date.now() - runningQueries[query.__knexQueryUid]}ms`
+      );
       delete runningQueries[query.__knexQueryUid];
     }
 
     if (query.sql && query.bindings && query.bindings.length) {
       const oldSql = clone(query.sql);
       const bindings = clone(query.bindings);
-      const sql = oldSql.replace(/\$\d+/gi, (x) => {
-        return knexInstance.raw('?', [bindings.shift()]);
+      const sql = oldSql.replace(/\$\d+/gi, () => {
+        return knexInstance.raw("?", [bindings.shift()]);
       });
 
       log(chalk.blue(`[${connectionName}]`), chalk.magenta(sql), totalTimeInMS);
     } else if (query.sql) {
-      log(chalk.blue(`[${connectionName}]`), chalk.magenta(query.sql), totalTimeInMS);
+      log(
+        chalk.blue(`[${connectionName}]`),
+        chalk.magenta(query.sql),
+        totalTimeInMS
+      );
     }
   });
 }
 
-function addDBConnection(name: string, options: ConnectionOptsType, db: Object): Function {
+function addDBConnection(
+  name: string,
+  options: ConnectionOptsType,
+  db: Object
+): Function {
   if (db[name]) {
     log(chalk.yellow.bold(`DB connection ${name} already added`));
     return db[name];
@@ -69,4 +82,4 @@ function addDBConnection(name: string, options: ConnectionOptsType, db: Object):
   return knexInstance;
 }
 
-module.exports = {addDBConnection};
+module.exports = { addDBConnection };

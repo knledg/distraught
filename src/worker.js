@@ -1,14 +1,14 @@
 /* @flow */
-const {each, isFunction} = require('lodash');
+const { each, isFunction } = require("lodash");
 let Heretic;
-const chalk = require('chalk');
-const {log} = require('./lib/logger');
-const Raven = require('raven');
+const chalk = require("chalk");
+const { log } = require("./lib/logger");
+const Raven = require("raven");
 
 type QueueType = {|
   name: string,
   concurrency?: number,
-  isEnabled: Function|boolean,
+  isEnabled: Function | boolean,
   handler: Function,
   alertAt?: number,
   killAt?: number,
@@ -34,7 +34,7 @@ const workerServer = function workerServer(options: OptionsType) {
   }
 
   if (!Heretic) {
-    Heretic = require('@esvinson/heretic');
+    Heretic = require("@esvinson/heretic");
   }
 
   return {
@@ -55,65 +55,86 @@ const workerServer = function workerServer(options: OptionsType) {
         return Promise.resolve();
       }
 
-      log(chalk.bold.blue(queueName), chalk.yellow.bold('[pausing]'));
+      log(chalk.bold.blue(queueName), chalk.yellow.bold("[pausing]"));
       return queue
         .pause()
         .then(() => {
-          log(chalk.bold.blue(queueName), chalk.yellow.bold('[paused]'));
+          log(chalk.bold.blue(queueName), chalk.yellow.bold("[paused]"));
 
-          if (timeoutInMS && ! pausedQueues[queueName]) {
+          if (timeoutInMS && !pausedQueues[queueName]) {
             setTimeout(() => {
-              log(chalk.bold.blue(queueName), chalk.green.bold('[resuming]'));
+              log(chalk.bold.blue(queueName), chalk.green.bold("[resuming]"));
               return this.resume(queueName);
             }, timeoutInMS);
             pausedQueues[queueName] = true;
           }
         })
         .catch((err) => {
-          log(chalk.bold.red(queueName), chalk.white.bold(err.message), chalk.red.bold('[unable to pause]'));
+          log(
+            chalk.bold.red(queueName),
+            chalk.white.bold(err.message),
+            chalk.red.bold("[unable to pause]")
+          );
           throw err;
         });
     },
 
     resume(queueName: string): Promise<void> {
       const queue = this.heretic.queues[queueName];
-      if (! queue) {
+      if (!queue) {
         return Promise.resolve();
       }
 
       return queue
         .start()
         .then(() => {
-          log(chalk.bold.blue(queueName), chalk.green.bold('[resumed]'));
+          log(chalk.bold.blue(queueName), chalk.green.bold("[resumed]"));
           if (pausedQueues[queueName]) {
             delete pausedQueues[queueName];
           }
         })
         .catch((err) => {
-          log(chalk.bold.red(queueName), chalk.white.bold(err.message), chalk.red.bold('[unable to resume]'));
+          log(
+            chalk.bold.red(queueName),
+            chalk.white.bold(err.message),
+            chalk.red.bold("[unable to resume]")
+          );
           throw err;
         });
     },
 
     setAlertAt(queue: QueueType) {
-      if (! queue.alertAt) {
+      if (!queue.alertAt) {
         return null;
       }
 
       return setTimeout(function() {
-        log(chalk.yellow.bold(`A job in ${queue.name} is taking a long time to fulfill`), chalk.green.bold('[alert]'));
+        log(
+          chalk.yellow.bold(
+            `A job in ${queue.name} is taking a long time to fulfill`
+          ),
+          chalk.green.bold("[alert]")
+        );
       }, queue.alertAt);
     },
 
     setKillAt(queue: QueueType, job: Object, done: Function) {
-      if (! queue.killAt) {
+      if (!queue.killAt) {
         return null;
       }
 
       return setTimeout(function() {
-        log(chalk.red.bold(`Killing job in ${queue.name}, exceeded maximum timeout`), chalk.green.bold('[killing-job]'), job);
+        log(
+          chalk.red.bold(
+            `Killing job in ${queue.name}, exceeded maximum timeout`
+          ),
+          chalk.green.bold("[killing-job]"),
+          job
+        );
 
-        const error = new Error(`Exceeded maximum timeout of ${Number(queue.killAt)} milleseconds`);
+        const error = new Error(
+          `Exceeded maximum timeout of ${Number(queue.killAt)} milleseconds`
+        );
         done(error);
 
         if (queue.onKilled) {
@@ -129,8 +150,8 @@ const workerServer = function workerServer(options: OptionsType) {
       // the 'jobError' event happens when a job message is published in RabbitMQ that
       // can never be handled correctly (malformed JSON, job id doesn't exist in the
       // database, etc.). The message will be dead-lettered for later inspection (by you)
-      this.heretic.on('jobError', err => {
-        log(chalk.red.bold('Error with job!'), err);
+      this.heretic.on("jobError", (err) => {
+        log(chalk.red.bold("Error with job!"), err);
         if (process.env.SENTRY_DSN) {
           Raven.captureException(err);
         }
@@ -138,8 +159,8 @@ const workerServer = function workerServer(options: OptionsType) {
 
       // the 'jobFailed' event happens when a job fails, but in a recoverable way. it
       // will be automatically retried up to the maximum number of retries.
-      this.heretic.on('jobFailed', (savedJob, err) => {
-        log(chalk.red.bold('Job execution failed!'), err);
+      this.heretic.on("jobFailed", (savedJob, err) => {
+        log(chalk.red.bold("Job execution failed!"), err);
         if (process.env.SENTRY_DSN) {
           Raven.captureException(err, {
             extra: {
@@ -156,66 +177,79 @@ const workerServer = function workerServer(options: OptionsType) {
      *            With a default concurrency of 1]
      */
     dequeue() {
-      if (! (options.queues && options.queues.length)) {
-        throw new Error('Please specify one or many queues to begin processing on');
+      if (!(options.queues && options.queues.length)) {
+        throw new Error(
+          "Please specify one or many queues to begin processing on"
+        );
       }
 
-      each(options.queues, queue => {
+      each(options.queues, (queue) => {
         let isEnabled = true;
 
         if (queue.isEnabled && isFunction(queue.isEnabled)) {
           isEnabled = queue.isEnabled(); // If function, call fn to get bool result
-        } else if (queue.hasOwnProperty('isEnabled')) {
+        } else if (queue.hasOwnProperty("isEnabled")) {
           isEnabled = queue.isEnabled; // Standard bool
         }
 
         if (isEnabled) {
-          log(chalk.bold.blue(queue.name), chalk.green.bold('[enabled]'));
-          this.heretic.process(queue.name, queue.concurrency || 1, (job: Object, message: string, done: Function) => {
-            if (queue.debug) {
-              log(chalk.cyan.bold(queue.name), chalk.blue.bold('[started]'));
-            }
-
-            const doIt = () => {
-              if (process.env.SENTRY_DSN) {
-                Raven.setContext({
-                  payload: job.payload,
-                });
+          log(chalk.bold.blue(queue.name), chalk.green.bold("[enabled]"));
+          this.heretic.process(
+            queue.name,
+            queue.concurrency || 1,
+            (job: Object, message: string, done: Function) => {
+              if (queue.debug) {
+                log(chalk.cyan.bold(queue.name), chalk.blue.bold("[started]"));
               }
-              const executingPromise = queue.handler(job, message, done);
-              const alertAt = this.setAlertAt(queue, executingPromise);
-              const killAt = this.setKillAt(queue, job, done);
 
-              return executingPromise
-                .then((result) => {
-                  clearTimeout(alertAt);
-                  clearTimeout(killAt);
+              const doIt = () => {
+                if (process.env.SENTRY_DSN) {
+                  Raven.setContext({
+                    payload: job.payload,
+                  });
+                }
+                const executingPromise = queue.handler(job, message, done);
+                const alertAt = this.setAlertAt(queue, executingPromise);
+                const killAt = this.setKillAt(queue, job, done);
 
-                  if (queue.debug) {
-                    log(chalk.cyan.bold(`${queue.name}`), chalk.green.bold('[completed]'));
-                  }
-                  return result;
-                })
-                .then(() => {
-                  if (this.ttlReached) {
-                    log(chalk.cyan.bold(`${queue.name}`), 'Triggering exit', chalk.red.bold('[timeout reached]'));
-                    this.heretic.on('jobComplete', () => {
-                      process.exit(0);
-                    });
-                  }
+                return executingPromise
+                  .then((result) => {
+                    clearTimeout(alertAt);
+                    clearTimeout(killAt);
+
+                    if (queue.debug) {
+                      log(
+                        chalk.cyan.bold(`${queue.name}`),
+                        chalk.green.bold("[completed]")
+                      );
+                    }
+                    return result;
+                  })
+                  .then(() => {
+                    if (this.ttlReached) {
+                      log(
+                        chalk.cyan.bold(`${queue.name}`),
+                        "Triggering exit",
+                        chalk.red.bold("[timeout reached]")
+                      );
+                      this.heretic.on("jobComplete", () => {
+                        process.exit(0);
+                      });
+                    }
+                  });
+              };
+
+              if (process.env.SENTRY_DSN) {
+                Raven.context(() => {
+                  doIt();
                 });
-            };
-
-            if (process.env.SENTRY_DSN) {
-              Raven.context(() => {
+              } else {
                 doIt();
-              });
-            } else {
-              doIt();
+              }
             }
-          });
+          );
         } else {
-          log(chalk.bold.blue(queue.name), chalk.red.bold('[disabled]'));
+          log(chalk.bold.blue(queue.name), chalk.red.bold("[disabled]"));
         }
       });
     },

@@ -1,9 +1,9 @@
 // @flow
-const _ = require('lodash');
-const {log} = require('./lib/logger');
-const chalk = require('chalk');
+const _ = require("lodash");
+const { log } = require("./lib/logger");
+const chalk = require("chalk");
 let CronJob;
-const Raven = require('raven');
+const Raven = require("raven");
 
 type CronType = {
   name: string,
@@ -11,7 +11,7 @@ type CronType = {
   onTick: Function,
   runOnInit: boolean,
   start?: boolean,
-  isEnabled?: Function|boolean,
+  isEnabled?: Function | boolean,
 };
 type OptionsType = {
   requiredEnv?: any,
@@ -19,8 +19,8 @@ type OptionsType = {
 };
 
 const cronServer = function cronServer(options: OptionsType) {
-  if (! (options.crons && options.crons.length)) {
-    throw new Error('Please specify one or many crons to begin processing on');
+  if (!(options.crons && options.crons.length)) {
+    throw new Error("Please specify one or many crons to begin processing on");
   }
 
   if (process.env.SENTRY_DSN) {
@@ -31,16 +31,16 @@ const cronServer = function cronServer(options: OptionsType) {
   }
 
   if (!CronJob) {
-    CronJob = require('cron').CronJob;
+    CronJob = require("cron").CronJob;
   }
 
-  _.each(options.crons, cron => {
+  _.each(options.crons, (cron) => {
     let isEnabled = true;
 
     if (cron.isEnabled && _.isFunction(cron.isEnabled)) {
       /* $FlowIgnore */
       isEnabled = cron.isEnabled(); // If function, call fn to get bool result
-    } else if (cron.hasOwnProperty('isEnabled')) {
+    } else if (cron.hasOwnProperty("isEnabled")) {
       isEnabled = cron.isEnabled; // Standard bool
     }
 
@@ -70,9 +70,9 @@ const cronServer = function cronServer(options: OptionsType) {
         },
         start: cron.start || true,
       });
-      log(chalk.blue(cron.name), chalk.green('[enabled]'));
+      log(chalk.blue(cron.name), chalk.green("[enabled]"));
     } else {
-      log(chalk.blue(cron.name), chalk.red('[disabled]'));
+      log(chalk.blue(cron.name), chalk.red("[disabled]"));
     }
   });
 };

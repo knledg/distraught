@@ -1,17 +1,17 @@
 // @flow
-const axios = require('axios');
-const chalk = require('chalk');
-const log = require('./logger').log;
+const axios = require("axios");
+const chalk = require("chalk");
+const log = require("./logger").log;
 
 const url = process.env.SLACK_WEBHOOK_URL;
 
-declare type SlackPayloadAttachmentField = {
+type SlackPayloadAttachmentField = {
   title?: string,
   value?: string,
   short?: boolean,
 };
 
-declare type SlackPayloadAttachment = {
+type SlackPayloadAttachment = {
   fallback?: string,
   color?: string,
   pretext?: string,
@@ -26,10 +26,10 @@ declare type SlackPayloadAttachment = {
   thumb_url?: string,
   footer?: string,
   footer_icon?: string,
-  ts?: number
+  ts?: number,
 };
 
-declare type SlackPayload = {
+type SlackPayload = {
   username?: string,
   channel?: string,
   icon_emoji?: string,
@@ -43,25 +43,28 @@ function getMessage(payload: SlackPayload) {
   } else if (payload.attachments && payload.attachments[0]) {
     return payload.attachments[0].pretext || payload.attachments[0].title;
   }
-  return 'Unknown message';
+  return "Unknown message";
 }
 
 module.exports = {
   slack: {
     send(data: SlackPayload): Promise<*> {
       if (!url) {
-        if (process.env.NODE_ENV === 'development') {
-          log(chalk.magenta.bold('Slack Notification (Not Sent): '), getMessage(data));
+        if (process.env.NODE_ENV === "development") {
+          log(
+            chalk.magenta.bold("Slack Notification (Not Sent): "),
+            getMessage(data)
+          );
           return Promise.resolve();
         }
-        return Promise.reject('Slack Webhook URL not found');
+        return Promise.reject("Slack Webhook URL not found");
       }
 
       return axios({
-        method: 'post',
+        method: "post",
         url,
         data,
-        headers: {'Content-type': 'application/json'},
+        headers: { "Content-type": "application/json" },
       });
     },
   },

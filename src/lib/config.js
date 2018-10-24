@@ -8,7 +8,7 @@ let cfg = {
   db: {},
   cache: {},
   pugOptions: {
-    basedir: '',
+    basedir: "",
   },
   email: {
     devEmail: null,
@@ -20,4 +20,4 @@ const cache = {};
 const heretic = {};
 const db = {};
 
-module.exports = {cfg, cache, db, heretic};
+module.exports = { cfg, cache, db, heretic };

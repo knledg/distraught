@@ -1,14 +1,13 @@
 /* @flow */
-const _ = require('lodash');
-const sendgrid = require('sendgrid');
-const bluebird = require('bluebird');
+const _ = require("lodash");
+const sendgrid = require("sendgrid");
+const bluebird = require("bluebird");
 
-const logErr = require('./logger').logErr;
-const cfg = require('./config').cfg;
+const logErr = require("./logger").logErr;
+const cfg = require("./config").cfg;
 
 sendgrid.Promise = bluebird;
 const sg = sendgrid(process.env.SENDGRID_API_KEY);
-
 
 /**
  * Helper function to add original email address
@@ -20,10 +19,12 @@ const sg = sendgrid(process.env.SENDGRID_API_KEY);
  */
 function getOverriddenEmail(email: string): string {
   if (!cfg.email.devEmail) {
-    throw new Error('Email failed to send: cfg.email.devEmail is not set');
+    throw new Error("Email failed to send: cfg.email.devEmail is not set");
   }
-  const devEmailParts = cfg.email.devEmail.split('@');
-  return `${devEmailParts[0]}+${email.replace('@', '.at.')}@${devEmailParts[1]}`;
+  const devEmailParts = cfg.email.devEmail.split("@");
+  return `${devEmailParts[0]}+${email.replace("@", ".at.")}@${
+    devEmailParts[1]
+  }`;
 }
 
 /**
@@ -34,8 +35,8 @@ function overrideEmail(email: string): string {
   if (!_.includes(cfg.email.guardedEnvironments, process.env.NODE_ENV)) {
     return email;
   }
-  if (!(cfg.email.devEmail)) {
-    throw new Error('Email failed to send: cfg.email.devEmail is not set');
+  if (!cfg.email.devEmail) {
+    throw new Error("Email failed to send: cfg.email.devEmail is not set");
   }
   return getOverriddenEmail(email);
 }
@@ -58,36 +59,55 @@ type EmailPayload = {|
  * Given an email payload, send an email through Sendgrid
  * @param {Object} payload
  */
-async function sendEmail(opts: EmailPayload): Promise<boolean|Object> {
+async function sendEmail(opts: EmailPayload): Promise<boolean | Object> {
   const personalization = new sendgrid.mail.Personalization();
-  if (!((opts.toMultiple && opts.toMultiple) || (opts.toAddress && opts.toAddress.length && opts.toName && opts.toName.length))) {
-    logErr(new Error('Unable to send email, invalid options'), {opts});
+  if (
+    !(
+      (opts.toMultiple && opts.toMultiple) ||
+      (opts.toAddress &&
+        opts.toAddress.length &&
+        opts.toName &&
+        opts.toName.length)
+    )
+  ) {
+    logErr(new Error("Unable to send email, invalid options"), { opts });
     return false;
   }
 
   if (opts.toMultiple) {
-    const validRecipients = _.reject(opts.toMultiple, (recipient) => !recipient.toAddress);
+    const validRecipients = _.reject(
+      opts.toMultiple,
+      (recipient) => !recipient.toAddress
+    );
     if (!(validRecipients && validRecipients.length)) {
-      logErr(new Error('Unable to send email, no valid recipient'), {opts});
+      logErr(new Error("Unable to send email, no valid recipient"), { opts });
       return false;
     }
 
     _.each(validRecipients, (recipient) => {
-      personalization.addTo({email: overrideEmail(recipient.toAddress), name: recipient.toName});
+      personalization.addTo({
+        email: overrideEmail(recipient.toAddress),
+        name: recipient.toName,
+      });
     });
   } else if (opts.toAddress && opts.toName) {
-    personalization.addTo({email: overrideEmail(opts.toAddress), name: opts.toName});
+    personalization.addTo({
+      email: overrideEmail(opts.toAddress),
+      name: opts.toName,
+    });
   }
 
   const mail = new sendgrid.mail.Mail();
-  mail.setFrom({email: opts.fromAddress, name: opts.fromName});
+  mail.setFrom({ email: opts.fromAddress, name: opts.fromName });
   mail.addPersonalization(personalization);
   mail.setSubject(opts.subject);
-  mail.addContent(new sendgrid.mail.Content(opts.contentType || 'text/html', opts.html));
+  mail.addContent(
+    new sendgrid.mail.Content(opts.contentType || "text/html", opts.html)
+  );
 
   if (opts.attachments && opts.attachments.length) {
     _.each(opts.attachments, (attachment) => {
-      const content = new Buffer(attachment.content).toString('base64');
+      const content = new Buffer(attachment.content).toString("base64");
       const mailAttachment = new sendgrid.mail.Attachment();
       mailAttachment.setFilename(attachment.title);
       mailAttachment.setContent(content);
@@ -97,8 +117,8 @@ async function sendEmail(opts: EmailPayload): Promise<boolean|Object> {
   }
 
   const request = sg.emptyRequest({
-    method: 'POST',
-    path: '/v3/mail/send',
+    method: "POST",
+    path: "/v3/mail/send",
     body: mail.toJSON(),
   });
 

@@ -1,7 +1,7 @@
 // @flow
 
-const _ = require('lodash');
-const {toSnakeCase} = require('./transformations');
+const _ = require("lodash");
+const { toSnakeCase } = require("./transformations");
 
 /**
  * [create - create one or many records
@@ -9,7 +9,12 @@ const {toSnakeCase} = require('./transformations');
  *           automatically snakecases all keys on all records]
  * @return {Array} Array of new records
  */
-const create = function create(knex: Function, tableName: string, payload: any, columns: Array<string>|string = '*') {
+const create = function create(
+  knex: Function,
+  tableName: string,
+  payload: any,
+  columns: Array<string> | string = "*"
+) {
   if (!Array.isArray(payload)) {
     payload = [payload];
   }
@@ -31,26 +36,40 @@ const create = function create(knex: Function, tableName: string, payload: any, 
  * @param  {Object}   payload     only accepts object of keys and values, not an array
  * @return {Array}                returns array of updated records
  */
-const update = function update(knex: Function, tableName: string, filters: any, payload: any) {
+const update = function update(
+  knex: Function,
+  tableName: string,
+  filters: any,
+  payload: any
+) {
   const modifiedFilters = toSnakeCase(filters);
   const modifiedPayload = toSnakeCase(payload);
 
   return knex(tableName)
     .where(modifiedFilters)
-    .returning('*')
+    .returning("*")
     .update(modifiedPayload);
 };
 
 module.exports = {
-
-  fetchMany(knex: Function, tableName: string, filters: any, columns: Array<string>|string = '*') {
+  fetchMany(
+    knex: Function,
+    tableName: string,
+    filters: any,
+    columns: Array<string> | string = "*"
+  ) {
     const modifiedFilters = toSnakeCase(filters);
     return knex(tableName)
       .columns(columns)
       .where(modifiedFilters);
   },
 
-  fetchOne(knex: Function, tableName: string, filters: any, columns: Array<string>|string = '*') {
+  fetchOne(
+    knex: Function,
+    tableName: string,
+    filters: any,
+    columns: Array<string> | string = "*"
+  ) {
     const modifiedFilters = toSnakeCase(filters);
     return knex(tableName)
       .first(columns)
@@ -63,9 +82,15 @@ module.exports = {
   /**
    * [createOne - Calls create Fn but returns the first result]
    */
-  createOne(knex: Function, tableName: string, payload: any, columns: Array<string>|string = '*') {
-    return create(knex, tableName, payload, columns)
-      .then(records => _.get(records, '0'));
+  createOne(
+    knex: Function,
+    tableName: string,
+    payload: any,
+    columns: Array<string> | string = "*"
+  ) {
+    return create(knex, tableName, payload, columns).then((records) =>
+      _.get(records, "0")
+    );
   },
 
   update,
@@ -74,7 +99,8 @@ module.exports = {
    * [updateOne - Calls update Fn but returns the first result]
    */
   updateOne(knex: Function, tableName: string, filters: any, payload: any) {
-    return update(knex, tableName, filters, payload)
-      .then(records => _.get(records, '0'));
+    return update(knex, tableName, filters, payload).then((records) =>
+      _.get(records, "0")
+    );
   },
 };

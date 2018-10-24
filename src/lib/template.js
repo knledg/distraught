@@ -2,18 +2,19 @@
 
 let pug;
 
-const cfg = require('./config').cfg;
+const cfg = require("./config").cfg;
 
 const compiledPugs = {};
 function renderPug(templatePath: string, pageVars: Object = {}) {
   if (!pug) {
-    pug = require('pug');
+    pug = require("pug");
   }
 
-  templatePath = templatePath.indexOf('.pug') === -1 ? `${templatePath}.pug` : templatePath; // eslint-disable-line
+  templatePath =
+    templatePath.indexOf(".pug") === -1 ? `${templatePath}.pug` : templatePath; // eslint-disable-line
   let html;
 
-  if (typeof compiledPugs[templatePath] === 'function') {
+  if (typeof compiledPugs[templatePath] === "function") {
     html = compiledPugs[templatePath](pageVars);
   } else {
     compiledPugs[templatePath] = compilePug(templatePath);
@@ -23,7 +24,12 @@ function renderPug(templatePath: string, pageVars: Object = {}) {
 }
 
 function compilePug(templatePath: string) {
-  return pug.compileFile(`${cfg.pugOptions.basedir}${templatePath[0] === '/' ? '' : '/'}${templatePath}`, cfg.pugOptions);
+  return pug.compileFile(
+    `${cfg.pugOptions.basedir}${
+      templatePath[0] === "/" ? "" : "/"
+    }${templatePath}`,
+    cfg.pugOptions
+  );
 }
 
-module.exports = {renderPug};
+module.exports = { renderPug };
