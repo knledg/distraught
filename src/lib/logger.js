@@ -32,7 +32,14 @@ function logErr(err: Error, extra: Object = {}): void {
       ravenPayload.user = extra.user;
     }
     try {
-      raven.captureException(err, ravenPayload);
+      // Raven errors do not throw
+      // Callback us used to capture the raven error and log the original error.
+      // Example of an error from sentry is : Rate Limiting
+      raven.captureException(err, ravenPayload, (sentryError) => {
+        if (sentryError) {
+          log(pe.render(err)); // log original error because sentry logging failed
+        }
+      });
     } catch (captureExceptionErr) {
       log(pe.render(captureExceptionErr)); // log error we received tried to send to Sentry
       log(pe.render(err)); // log original error
