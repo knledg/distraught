@@ -1,31 +1,34 @@
-// @flow
 /**
  * Module dependencies.
  */
-const express = require("express");
-const compression = require("compression");
-const session = require("express-session");
-const bodyParser = require("body-parser");
-const logger = require("morgan");
-const chalk = require("chalk");
-const lusca = require("lusca");
-const flash = require("express-flash");
-const passport = require("passport");
+import express from 'express';
+import compression from "compression";
+import session from "express-session";
+import bodyParser from "body-parser";
+import logger from "morgan";
+import chalk from "chalk";
+import lusca from "lusca";
+import flash from "express-flash";
+import passport from "passport";
 
-const http = require("http");
-const socketio = require("socket.io");
+import http from "http";
+import socketio from "socket.io";
 
-const Raven = require("raven");
-const RedisStore = require("connect-redis")(session);
-const redis = require("redis");
-const _ = require("lodash");
-const helmet = require("helmet");
-const YAML = require("yamljs");
+import Raven from "raven";
+import redis from "redis";
+import {
+  assign,
+  get,
+  isEmpty
+} from "lodash";
+import helmet  from "helmet";
+import YAML  from "yamljs";
 
+const RedisStore = require('connect-redis')(session);
 const cfg = require("./lib/config").cfg;
 const logErr = require("./lib/logger").logErr;
 
-type Req = {|
+export type Req = {
   body: Object,
   query: Object,
   path: string,
@@ -35,39 +38,39 @@ type Req = {|
   originalUrl: string,
   validationErrors: () => Array<Object>,
   assert: (
-    string,
-    string
+    a: string,
+    b: string
   ) => {
     isInt: Function,
     isEmail: Function,
     equals: Function,
     len: Function,
   },
-  sanitize: (string) => Object,
+  sanitize: (a: string) => Object,
   isAuthenticated: () => boolean,
   flash: (
-    "success" | "info" | "error" | "warning",
-    Array<string> | string
+    type: "success" | "info" | "error" | "warning",
+    b: Array<string> | string
   ) => void,
   session: Object,
   logout: Function,
-|};
+};
 
-type Res = $ReadOnly<{
-  send: (any) => Res,
-  json: (any) => Res,
-  status: (number) => Res,
-  render: (string, ?Object) => void,
+export type Res = Readonly<{
+  send: (a: any) => Res,
+  json: (a: any) => Res,
+  status: (a: number) => Res,
+  render: (a: string, b?: Object) => void,
   locals: Object,
-  redirect: (string) => void,
-  type: (any) => Res,
-  set: (string, string) => void,
+  redirect: (a: string) => void,
+  type: (a: any) => Res,
+  set: (a: string, b: string) => void,
 }>;
 
 type OptionsType = {
   logFormat?: string,
   publicPath?: string,
-  viewsPath?: string,
+  viewPath?: string,
   session?: {
     resave?: boolean,
     rolling?: boolean,
@@ -83,11 +86,27 @@ type OptionsType = {
     swaggerDocOptions?: Object,
     pre?: Function,
   }, // for optional swagger integration
-  findUserById: (id: number) => Object,
+  findUserById: (id: number) => Promise<number>,
   viewEngine?: string,
   enableStatusMonitor?: boolean,
   enableExpressValidator?: boolean,
 };
+
+declare global {
+  namespace NodeJS {
+    interface ProcessEnv {
+      PORT: string
+      SENTRY_DSN: string
+      REDIS_URL: string
+      REDIS_PREFIX: string
+      TTL_IN_SECONDS: string
+      SESSION_SECRET: string
+      NODE_ENV: string
+
+    }
+  }
+}
+
 
 const {
   PORT,
@@ -100,11 +119,11 @@ const {
 } = process.env;
 
 const httpServer = function httpServer(options: OptionsType) {
-  const app = express();
+  const app: express.Application = express();
   app.set("port", PORT || 3000);
 
-  // $FlowBug
-  const webserver = http.Server(app); // eslint-disable-line
+  // @ts-ignore
+  const webserver = http.Server(app);
   const io = socketio(webserver);
 
   app.use(helmet());
@@ -140,7 +159,7 @@ const httpServer = function httpServer(options: OptionsType) {
   app.use(
     bodyParser.urlencoded(
       options.bodyParser && options.bodyParser.urlencodedOptions
-        ? _.assign({ extended: true }, options.bodyParser.urlencodedOptions)
+        ? assign({ extended: true }, options.bodyParser.urlencodedOptions)
         : { extended: true }
     )
   );
@@ -177,34 +196,29 @@ const httpServer = function httpServer(options: OptionsType) {
     const redisAdapter = require("socket.io-redis");
     io.adapter(redisAdapter(REDIS_URL));
   }
-
-  const sessionOpts = _.assign(
-    {},
-    {
+      
+    app.use(session({
       resave: false,
       rolling: true,
       saveUninitialized: false,
       unset: "destroy",
       secret: SESSION_SECRET,
       store: sessionStore,
-    },
-    options.session
-  );
+    ...options.session
+  }));
 
-  app.use(session(sessionOpts));
-
-  passport.serializeUser((user, done) => {
+  passport.serializeUser((user: any, done) => {
     if (!(user && user.id)) {
       throw new Error("User not found");
     }
     done(null, user.id);
   });
 
-  passport.deserializeUser((id, done) => {
+  passport.deserializeUser((id: number, done) => {
     return options
       .findUserById(id)
       .then((user) => {
-        if (_.isEmpty(user)) {
+        if (isEmpty(user)) {
           throw new Error("User not found");
         }
         return done(null, user);
@@ -255,12 +269,12 @@ const httpServer = function httpServer(options: OptionsType) {
     // Serve Swagger Docs At /docs
     if (options.swaggerConfig && options.swaggerConfig.yamlPath) {
       const yamlConfig = YAML.load(options.swaggerConfig.yamlPath);
-      const swaggerDoc = _.assign(
+      const swaggerDoc = assign(
         {},
         yamlConfig,
-        _.get(options, "swaggerConfig.swaggerDocOptions", {})
+        get(options, "swaggerConfig.swaggerDocOptions", {})
       );
-      const swaggerPre = _.get(options, "swaggerConfig.pre", (req, res, next) =>
+      const swaggerPre = get(options, "swaggerConfig.pre", (req, res, next) =>
         next()
       );
       app.use(

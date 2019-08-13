@@ -1,5 +1,3 @@
-// @flow
-
 const chalk = require("chalk");
 const { httpServer, jw, w } = require("./web");
 const { slack } = require("./lib/slack");
@@ -33,7 +31,7 @@ const {
   getProtocolAndHostname,
   getHostname,
   formatCap,
-  formatAddress
+  formatAddress,
 } = require("./lib/transformations");
 const { SECOND, MINUTE, HOUR } = require("./lib/constants");
 const { cronServer } = require("./cron");
