@@ -1,27 +1,26 @@
-// @flow
-const { merge, each, keys, omit } = require("lodash");
+import { merge, each, keys, omit } from "lodash";
 
-let { db, heretic, cache, cfg } = require("./config");
+import { db, heretic, cache, cfg } from "./config";
+import { addHeretic } from "./heretic";
+import { addCache } from "./cache";
 
-const addHeretic = require("./heretic").addHeretic;
-const addCache = require("./cache").addCache;
 const addDBConnection = require("./db").addDBConnection;
 
 type Config = {
   pugOptions?: {
-    basedir: string,
-  },
+    basedir: string;
+  };
   email?: {
-    devEmail?: null | string,
-    guardedEnvironments?: Array<string>,
-  },
-  cache?: Object,
-  db?: Object,
-  heretic?: Object,
-  captureUncaught?: boolean,
-  captureUnhandled?: boolean,
-  ignoredStackTraceLines?: Array<string>,
-  pathToServerErrorTemplate?: null | string,
+    devEmail?: null | string;
+    guardedEnvironments?: Array<string>;
+  };
+  cache?: Object;
+  db?: Object;
+  heretic?: Object;
+  captureUncaught?: boolean;
+  captureUnhandled?: boolean;
+  ignoredStackTraceLines?: Array<string>;
+  pathToServerErrorTemplate?: null | string;
 };
 
 function init(config: Config = {}): void {

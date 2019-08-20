@@ -1,13 +1,12 @@
-// @flow
+import { map, isFunction } from "lodash";
+import redis from "redis";
 
-const _ = require("lodash");
+import { MINUTE } from "./constants";
+
 const chalk = require("chalk");
-const { MINUTE } = require("./constants");
-
-const redis = require("redis");
 const log = require("./logger").log;
 
-exports.addCache = function(
+export function addCache(
   name: string,
   options: { connection: string },
   cache: Object
@@ -101,7 +100,7 @@ exports.addCache = function(
         }
         const p = prefix;
         if (p) {
-          key = _.map(key, (k) => {
+          key = map(key, (k) => {
             if (k.indexOf(p) === 0) {
               return k.slice(p.length);
             }
@@ -132,7 +131,7 @@ exports.addCache = function(
      */
     getValueIfFunc(value: any): Promise<?any> {
       return new Promise((resolve, reject) => {
-        if (_.isFunction(value)) {
+        if (isFunction(value)) {
           const result = value();
 
           if (result.isPending) {

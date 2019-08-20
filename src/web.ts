@@ -1,12 +1,11 @@
 /**
  * Module dependencies.
  */
-import express from 'express';
+import express from "express";
 import compression from "compression";
 import session from "express-session";
 import bodyParser from "body-parser";
 import logger from "morgan";
-import chalk from "chalk";
 import lusca from "lusca";
 import flash from "express-flash";
 import passport from "passport";
@@ -16,97 +15,92 @@ import socketio from "socket.io";
 
 import Raven from "raven";
 import redis from "redis";
-import {
-  assign,
-  get,
-  isEmpty
-} from "lodash";
-import helmet  from "helmet";
-import YAML  from "yamljs";
+import { assign, get, isEmpty } from "lodash";
+import helmet from "helmet";
+import YAML from "yamljs";
 
-const RedisStore = require('connect-redis')(session);
+const chalk = require("chalk");
+const RedisStore = require("connect-redis")(session);
 const cfg = require("./lib/config").cfg;
 const logErr = require("./lib/logger").logErr;
 
 export type Req = {
-  body: Object,
-  query: Object,
-  path: string,
-  params: Object,
-  user: null | Object,
-  headers: Object,
-  originalUrl: string,
-  validationErrors: () => Array<Object>,
+  body: Object;
+  query: Object;
+  path: string;
+  params: Object;
+  user: null | Object;
+  headers: Object;
+  originalUrl: string;
+  validationErrors: () => Array<Object>;
   assert: (
     a: string,
     b: string
   ) => {
-    isInt: Function,
-    isEmail: Function,
-    equals: Function,
-    len: Function,
-  },
-  sanitize: (a: string) => Object,
-  isAuthenticated: () => boolean,
+    isInt: Function;
+    isEmail: Function;
+    equals: Function;
+    len: Function;
+  };
+  sanitize: (a: string) => Object;
+  isAuthenticated: () => boolean;
   flash: (
     type: "success" | "info" | "error" | "warning",
     b: Array<string> | string
-  ) => void,
-  session: Object,
-  logout: Function,
+  ) => void;
+  session: Object;
+  logout: Function;
 };
 
 export type Res = Readonly<{
-  send: (a: any) => Res,
-  json: (a: any) => Res,
-  status: (a: number) => Res,
-  render: (a: string, b?: Object) => void,
-  locals: Object,
-  redirect: (a: string) => void,
-  type: (a: any) => Res,
-  set: (a: string, b: string) => void,
+  send: (a: any) => Res;
+  json: (a: any) => Res;
+  status: (a: number) => Res;
+  render: (a: string, b?: Object) => void;
+  locals: Object;
+  redirect: (a: string) => void;
+  type: (a: any) => Res;
+  set: (a: string, b: string) => void;
 }>;
 
 type OptionsType = {
-  logFormat?: string,
-  publicPath?: string,
-  viewPath?: string,
+  logFormat?: string;
+  publicPath?: string;
+  viewPath?: string;
   session?: {
-    resave?: boolean,
-    rolling?: boolean,
-    saveUninitialized?: boolean,
-  },
+    resave?: boolean;
+    rolling?: boolean;
+    saveUninitialized?: boolean;
+  };
   bodyParser?: {
-    jsonOptions?: Object,
-    urlencodedOptions?: Object,
-  },
+    jsonOptions?: Object;
+    urlencodedOptions?: Object;
+  };
   swaggerConfig?: {
-    appRoot: string,
-    yamlPath?: string,
-    swaggerDocOptions?: Object,
-    pre?: Function,
-  }, // for optional swagger integration
-  findUserById: (id: number) => Promise<number>,
-  viewEngine?: string,
-  enableStatusMonitor?: boolean,
-  enableExpressValidator?: boolean,
+    appRoot: string;
+    yamlPath?: string;
+    swaggerDocOptions?: Object;
+    pre?: Function;
+  }; // for optional swagger integration
+  findUserById: (id: number) => Promise<number>;
+  viewEngine?: string;
+  enableStatusMonitor?: boolean;
+  enableExpressValidator?: boolean;
 };
 
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
-      PORT: string
-      SENTRY_DSN: string
-      REDIS_URL: string
-      REDIS_PREFIX: string
-      TTL_IN_SECONDS: string
-      SESSION_SECRET: string
-      NODE_ENV: string
-
+      PORT: string;
+      SENTRY_DSN: string;
+      REDIS_URL: string;
+      REDIS_PREFIX: string;
+      TTL_IN_SECONDS: string;
+      SESSION_SECRET: string;
+      NODE_ENV: string;
     }
   }
 }
-
 
 const {
   PORT,
@@ -196,16 +190,18 @@ const httpServer = function httpServer(options: OptionsType) {
     const redisAdapter = require("socket.io-redis");
     io.adapter(redisAdapter(REDIS_URL));
   }
-      
-    app.use(session({
+
+  app.use(
+    session({
       resave: false,
       rolling: true,
       saveUninitialized: false,
       unset: "destroy",
       secret: SESSION_SECRET,
       store: sessionStore,
-    ...options.session
-  }));
+      ...options.session,
+    })
+  );
 
   passport.serializeUser((user: any, done) => {
     if (!(user && user.id)) {
@@ -241,7 +237,7 @@ const httpServer = function httpServer(options: OptionsType) {
     require("swagger-express-middleware")(
       options.swaggerConfig.yamlPath,
       app,
-      function(err, middleware) {
+      function(err: any, middleware: any) {
         if (err) {
           throw err;
         }
@@ -254,7 +250,7 @@ const httpServer = function httpServer(options: OptionsType) {
           // middleware.mock()
         );
 
-        app.use((error, req, res, next) => {
+        app.use((error: any, req: any, res: any, next: any) => {
           if (req.accepts("json")) {
             res.status(error.status);
             res.type("json");
@@ -274,8 +270,10 @@ const httpServer = function httpServer(options: OptionsType) {
         yamlConfig,
         get(options, "swaggerConfig.swaggerDocOptions", {})
       );
-      const swaggerPre = get(options, "swaggerConfig.pre", (req, res, next) =>
-        next()
+      const swaggerPre = get(
+        options,
+        "swaggerConfig.pre",
+        (req: any, res: any, next: any) => next()
       );
       app.use(
         "/docs",
@@ -292,11 +290,12 @@ const httpServer = function httpServer(options: OptionsType) {
     passport,
     start() {
       webserver.listen(app.get("port"), () => {
-        console.log( // eslint-disable-line
+        console.log(
+          // eslint-disable-line
           `${chalk.green("✓")} App is running at http://localhost:${app.get(
             "port"
           )} in ${app.get("env")} mode`
-        ); 
+        );
       });
     },
   };
@@ -306,7 +305,7 @@ const httpServer = function httpServer(options: OptionsType) {
  * Wrap an Express handler Fn with this to capture any uncaught exceptions and return a 500 Error
  * @param {*} genFn
  */
-function wrap(genFn: (Req, Res) => Promise<*>) {
+function wrap(genFn: (Req: any, Res: any) => Promise<any>) {
   return function handler(req: Req, res: Res) {
     return genFn(req, res).catch((err) => {
       logErr(err, {
@@ -338,7 +337,7 @@ function wrap(genFn: (Req, Res) => Promise<*>) {
   };
 }
 
-function jsonWrap(genFn: (Req, Res) => Promise<*>) {
+function jsonWrap(genFn: (Req: any, Res: any) => Promise<any>) {
   return function handler(req: Req, res: Res) {
     return genFn(req, res).catch((err) => {
       logErr(err, {

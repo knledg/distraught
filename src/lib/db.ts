@@ -1,18 +1,16 @@
-// @flow
-const chalk = require("chalk");
-const clone = require("lodash").clone;
-const knex = require("knex");
-const merge = require("lodash").merge;
+import { clone, merge } from "lodash";
 
+const chalk = require("chalk");
+const knex = require("knex");
 const log = require("./logger").log;
 
 type ConnectionOptsType = {
-  debug: ?any,
-  connection: string,
+  debug?: any;
+  connection: string;
   pool?: {
-    min: number,
-    max: number,
-  },
+    min: number;
+    max: number;
+  };
 };
 
 const connectionOptionDefaults = {
@@ -24,10 +22,7 @@ const connectionOptionDefaults = {
   },
 };
 
-function enableSQLLogging(
-  knexInstance: Function,
-  connectionName: string
-): void {
+function enableSQLLogging(knexInstance: any, connectionName: string): void {
   const runningQueries = {};
   knexInstance.on("query", (query) => {
     runningQueries[query.__knexQueryUid] = Date.now();
@@ -61,7 +56,7 @@ function enableSQLLogging(
   });
 }
 
-function addDBConnection(
+export function addDBConnection(
   name: string,
   options: ConnectionOptsType,
   db: Object
@@ -81,5 +76,3 @@ function addDBConnection(
 
   return knexInstance;
 }
-
-module.exports = { addDBConnection };

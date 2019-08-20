@@ -1,7 +1,6 @@
-/* @flow */
-const _ = require("lodash");
-const sendgrid = require("sendgrid");
-const bluebird = require("bluebird");
+import { includes, reject, each } from "lodash";
+import sendgrid from "sendgrid";
+import bluebird from "bluebird";
 
 const logErr = require("./logger").logErr;
 const cfg = require("./config").cfg;
@@ -32,7 +31,7 @@ function getOverriddenEmail(email: string): string {
  * @param {String} email [address]
  */
 function overrideEmail(email: string): string {
-  if (!_.includes(cfg.email.guardedEnvironments, process.env.NODE_ENV)) {
+  if (!includes(cfg.email.guardedEnvironments, process.env.NODE_ENV)) {
     return email;
   }
   if (!cfg.email.devEmail) {
@@ -41,19 +40,19 @@ function overrideEmail(email: string): string {
   return getOverriddenEmail(email);
 }
 
-type EmailPayload = {|
-  subject: string,
-  html: string,
-  fromAddress?: string,
-  fromName?: string,
-  toName?: string,
-  toAddress?: string,
-  replyToAddress?: string,
-  replyToName?: string,
-  contentType?: string,
-  toMultiple?: Array<Object>,
-  attachments?: Array<Object>,
-|};
+type EmailPayload = {
+  subject: string;
+  html: string;
+  fromAddress?: string;
+  fromName?: string;
+  toName?: string;
+  toAddress?: string;
+  replyToAddress?: string;
+  replyToName?: string;
+  contentType?: string;
+  toMultiple?: Array<Object>;
+  attachments?: Array<Object>;
+};
 
 /**
  * Given an email payload, send an email through Sendgrid
@@ -75,7 +74,7 @@ async function sendEmail(opts: EmailPayload): Promise<boolean | Object> {
   }
 
   if (opts.toMultiple) {
-    const validRecipients = _.reject(
+    const validRecipients = reject(
       opts.toMultiple,
       (recipient) => !recipient.toAddress
     );
@@ -84,7 +83,7 @@ async function sendEmail(opts: EmailPayload): Promise<boolean | Object> {
       return false;
     }
 
-    _.each(validRecipients, (recipient) => {
+    each(validRecipients, (recipient) => {
       personalization.addTo({
         email: overrideEmail(recipient.toAddress),
         name: recipient.toName,
@@ -106,7 +105,7 @@ async function sendEmail(opts: EmailPayload): Promise<boolean | Object> {
   );
 
   if (opts.attachments && opts.attachments.length) {
-    _.each(opts.attachments, (attachment) => {
+    each(opts.attachments, (attachment) => {
       const content = new Buffer(attachment.content).toString("base64");
       const mailAttachment = new sendgrid.mail.Attachment();
       mailAttachment.setFilename(attachment.title);

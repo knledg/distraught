@@ -1,6 +1,4 @@
-// @flow
-
-let cfg = {
+export const cfg = {
   ignoredStackTraceLines: [],
   captureUncaught: false,
   captureUnhandled: false,
@@ -16,8 +14,6 @@ let cfg = {
   },
   pathToServerErrorTemplate: null,
 };
-const cache = {};
-const heretic = {};
-const db = {};
-
-module.exports = { cfg, cache, db, heretic };
+export const cache = {};
+export const heretic = {};
+export const db = {};

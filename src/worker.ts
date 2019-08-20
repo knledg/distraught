@@ -1,11 +1,12 @@
-/* @flow */
-const { each, isFunction } = require("lodash");
+import { each, isFunction } from "lodash";
+import Raven from "raven";
+
 let Heretic;
+
 const chalk = require("chalk");
 const { log } = require("./lib/logger");
-const Raven = require("raven");
 
-type QueueType = {|
+type QueueType = {
   name: string,
   concurrency?: number,
   isEnabled: Function | boolean,
@@ -14,13 +15,13 @@ type QueueType = {|
   killAt?: number,
   onKilled?: Function,
   debug?: boolean,
-|};
-type OptionsType = {|
+};
+type OptionsType = {
   requiredEnv?: any,
   queues: Array<QueueType>,
   heretic: Heretic,
   ttl?: number,
-|};
+};
 
 const pausedQueues = {};
 

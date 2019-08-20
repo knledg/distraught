@@ -1,21 +1,22 @@
-// @flow
-const _ = require("lodash");
+import { each, isFunction } from "lodash";
+import Raven from "raven";
+
 const { log } = require("./lib/logger");
 const chalk = require("chalk");
+
 let CronJob;
-const Raven = require("raven");
 
 type CronType = {
-  name: string,
-  cronTime: string,
-  onTick: Function,
-  runOnInit: boolean,
-  start?: boolean,
-  isEnabled?: Function | boolean,
+  name: string;
+  cronTime: string;
+  onTick: Function;
+  runOnInit: boolean;
+  start?: boolean;
+  isEnabled?: Function | boolean;
 };
 type OptionsType = {
-  requiredEnv?: any,
-  crons: Array<CronType>,
+  requiredEnv?: any;
+  crons: Array<CronType>;
 };
 
 const cronServer = function cronServer(options: OptionsType) {
@@ -34,10 +35,10 @@ const cronServer = function cronServer(options: OptionsType) {
     CronJob = require("cron").CronJob;
   }
 
-  _.each(options.crons, (cron) => {
+  each(options.crons, (cron) => {
     let isEnabled = true;
 
-    if (cron.isEnabled && _.isFunction(cron.isEnabled)) {
+    if (cron.isEnabled && isFunction(cron.isEnabled)) {
       /* $FlowIgnore */
       isEnabled = cron.isEnabled(); // If function, call fn to get bool result
     } else if (cron.hasOwnProperty("isEnabled")) {
