@@ -45,7 +45,7 @@ function logErr(err: Error, extra: Object = {}): void {
       log(pe.render(err)); // log original error
     }
   } else {
-    let stringified;
+    let stringified = "";
     try {
       stringified = JSON.stringify(extra);
     } catch (jsonStringifyErr) {} // eslint-disable-line
@@ -82,7 +82,7 @@ function logErr(err: Error, extra: Object = {}): void {
     err.stack = stack; // eslint-disable-line
     log(
       pe.render(err),
-      chalk.cyan("- ") + chalk.cyan(stringified || extra) + chalk.cyan("\n")
+      chalk.cyan("- ") + chalk.cyan(stringified) + chalk.cyan("\n")
     );
   }
 }

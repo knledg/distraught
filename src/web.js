@@ -119,7 +119,7 @@ const httpServer = function httpServer(options: OptionsType) {
 
   if (options.enableStatusMonitor) {
     app.use(
-      require("express-status-monitor")({
+      require("@smartrent/express-status-monitor")({
         websocket: io,
       })
     );
