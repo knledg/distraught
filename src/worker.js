@@ -34,7 +34,7 @@ const workerServer = function workerServer(options: OptionsType) {
   }
 
   if (!Heretic) {
-    Heretic = require("@esvinson/heretic");
+    Heretic = require("@smartrent/heretic");
   }
 
   return {

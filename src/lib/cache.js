@@ -110,7 +110,7 @@ exports.addCache = function(
         }
 
         if (process.env.DEBUG_CACHE) {
-          log(chalk.cyan("Invalidating", key));
+          log(chalk.cyan("Invalidating", key.join(", ")));
         }
         client.del(key, (err, res) => {
           return err ? reject(err) : resolve(res);
