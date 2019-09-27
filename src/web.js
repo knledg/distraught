@@ -86,7 +86,6 @@ type OptionsType = {
   findUserById: (id: number) => Object,
   viewEngine?: string,
   enableStatusMonitor?: boolean,
-  enableExpressValidator?: boolean,
 };
 
 const {
@@ -144,10 +143,6 @@ const httpServer = function httpServer(options: OptionsType) {
         : { extended: true }
     )
   );
-
-  if (options.enableExpressValidator) {
-    app.use(require("express-validator")());
-  }
 
   if (options.viewPath) {
     app.set("views", options.viewPath);
@@ -278,11 +273,13 @@ const httpServer = function httpServer(options: OptionsType) {
     passport,
     start() {
       webserver.listen(app.get("port"), () => {
-        console.log( // eslint-disable-line
+        /* eslint-disable no-console */
+        console.log(
           `${chalk.green("✓")} App is running at http://localhost:${app.get(
             "port"
           )} in ${app.get("env")} mode`
-        ); 
+        );
+        /* eslint-enable no-console */
       });
     },
   };

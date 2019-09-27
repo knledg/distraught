@@ -7,3 +7,4 @@ dist
 .vscode/*
 package-lock.json
 require-trace.trace
+.watchmanconfig

@@ -84,6 +84,10 @@ logErr(new Error('Whoa..That\'s not good'), {
 });
 ```
 
+### Server Monitoring
+
+In `httpserver`, if you specify `enableStatusMonitor: true`, a `/status` page will be accessible on the same port that the Express server is running that memory usage, CPU usage, response time, requests per second, and number of responses by status code using [express-status-monitor](https://www.npmjs.com/package/express-status-monitor)
+
 ## Database
 
 - Utilizes [Knex](http://knexjs.org/) to handle your queries
