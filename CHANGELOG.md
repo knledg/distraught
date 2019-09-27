@@ -1,3 +1,39 @@
+## [v5.0.0]
+> September 27, 2019
+
+### Project updates
+
+- update following deps to these versions:
+
+```javascript
+{
+  "@google-cloud/storage": "^1.7.0",
+  "axios": ">= 0.18.1",
+  "body-parser": "^1.19.0",
+  "chalk": "^2.4.2",
+  "compression": "^1.7.4",
+  "cron": "^1.7.2",
+  "express": "^4.17.1",
+  "express-status-monitor": "^1.2.6",
+  "glob": "^7.1.4",
+  "helmet": "^3.21.1",
+  "lodash": ">= 4.17.15",
+  "lusca": "^1.6.1",
+  "morgan": "^1.9.1",
+  "@babel/cli": "^7.6.2", 
+  "ava": "^2.4.0",
+}
+```
+
+### Feature updates
+
+- Add new fn `formatAddress`
+- Add new fn `formatCap` (format capitalization)
+
+### Breaking Changes
+
+- Remove support for `express-validator` in favor of using JOI validation
+
 ## [v4.5.0]
 > October 24th, 2018
 
