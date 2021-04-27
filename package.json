@@ -53,7 +53,7 @@
     "pug": "^2.0.0-rc.4",
     "raven": "^2.4.2",
     "raven-js": "^3.15.0",
-    "redis": "^2.6.3",
+    "redis": "^3.1.1",
     "sendgrid": "^5.2.3",
     "socket.io": "^2.0.3",
     "socket.io-redis": "^5.2.0",
